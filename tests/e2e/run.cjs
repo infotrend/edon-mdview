@@ -96,8 +96,8 @@ async function run() {
   await expect(page.locator('#shortcuts-dialog')).not.toBeVisible();
 
   const expectedLogoBounds = [
-    { x: 7, y: 21, width: 150, height: 180 },
-    { x: 74, y: 113, width: 175, height: 27 },
+    { x: 8, y: 53, width: 150, height: 150 },
+    { x: 75, y: 113, width: 173, height: 30 },
   ];
   const logoSvg = fs.readFileSync(path.join(root, 'build', 'edon-logo.svg'), 'utf8');
   const iconSvg = fs.readFileSync(path.join(root, 'build', 'icon.svg'), 'utf8');
@@ -115,7 +115,7 @@ async function run() {
       return bounds;
     };
     return {
-      interface: [...document.querySelectorAll('#edon-mark path')].map((pathElement) => {
+      interface: [...document.querySelectorAll('#edon-mark path:not(.edon-md)')].map((pathElement) => {
         const box = pathElement.getBBox();
         return { x: box.x, y: box.y, width: box.width, height: box.height };
       }),

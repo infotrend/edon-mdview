@@ -35,6 +35,20 @@ test('la finestra usa il logo EDON accessibile e il nuovo nome', () => {
   assert.match(main, /FSL-1\.1-MIT/);
 });
 
-test('le risorse vettoriali aggiungono il badge MD', () => {
-  assert.match(read('build/icon.svg'), />MD<\/text>/);
+test('le risorse vettoriali usano il logo EDON originale e aggiungono la sigla MD', () => {
+  const originalMark = '<path d="M8 53h150v30H38v90h120v30H8z"/>';
+  const originalBar = '<path d="M75 113h173v30H75z"/>';
+  const logo = read('build/edon-logo.svg');
+  const icon = read('build/icon.svg');
+  const html = read('src/renderer/index.html');
+  for (const markup of [logo, icon, html]) {
+    assert.ok(markup.includes(originalMark));
+    assert.ok(markup.includes(originalBar));
+  }
+  assert.match(logo, /fill="#155a54"/);
+  assert.match(icon, /fill="#155a54"/);
+  assert.doesNotMatch(icon, /Gradient|<text/);
+  assert.match(icon, /<path id="md" /);
+  assert.match(html, /<path class="edon-md" /);
+  assert.doesNotMatch(logo, /md/i);
 });

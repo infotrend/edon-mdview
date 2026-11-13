@@ -1,7 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-labelledby="title">
   <title id="title">EDON</title>
-  <g fill="#005f56">
-    <path d="M7 21h150v37H38v114h119v29H7z"/>
-    <path d="M74 113h175v27H74z"/>
+  <g fill="#155a54">
+    <path d="M8 53h150v30H38v90h120v30H8z"/>
+    <path d="M75 113h173v30H75z"/>
   </g>
 </svg>

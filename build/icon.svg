@@ -1,25 +1,10 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256">
-  <defs>
-    <linearGradient id="bg" x1="24" y1="16" x2="232" y2="240" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#102b28"/>
-      <stop offset="1" stop-color="#061311"/>
-    </linearGradient>
-    <linearGradient id="mark" x1="55" y1="45" x2="204" y2="190" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#16a695"/>
-      <stop offset="1" stop-color="#007568"/>
-    </linearGradient>
-    <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%">
-      <feDropShadow dx="0" dy="5" stdDeviation="6" flood-color="#000" flood-opacity=".35"/>
-    </filter>
-  </defs>
-  <rect x="4" y="4" width="248" height="248" rx="56" fill="url(#bg)"/>
-  <rect x="5" y="5" width="246" height="246" rx="55" fill="none" stroke="#31514c" stroke-opacity=".55" stroke-width="2"/>
-  <g fill="url(#mark)" transform="translate(40 22) scale(.68)">
-    <path d="M7 21h150v37H38v114h119v29H7z"/>
-    <path d="M74 113h175v27H74z"/>
-  </g>
-  <g filter="url(#shadow)">
-    <rect x="139" y="177" width="91" height="54" rx="14" fill="#e8fff9"/>
-    <text x="184.5" y="212" text-anchor="middle" fill="#005f56" font-family="Segoe UI, Arial, sans-serif" font-size="30" font-weight="750" letter-spacing="-1.5">MD</text>
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256" role="img" aria-labelledby="title">
+  <title id="title">EDON MDView</title>
+  <rect x="4" y="4" width="248" height="248" rx="56" fill="#fff"/>
+  <rect x="5" y="5" width="246" height="246" rx="55" fill="none" stroke="#155a54" stroke-opacity=".22" stroke-width="2"/>
+  <g fill="#155a54" transform="translate(128 128) scale(.8) translate(-128 -128)">
+    <path d="M8 53h150v30H38v90h120v30H8z"/>
+    <path d="M75 113h173v30H75z"/>
+    <path id="md" fill-rule="evenodd" d="M172 203v-42h12l7 19 7-19h12v42h-10v-25l-7 19h-4l-7-19v25zM217 161h14a17 21 0 0 1 0 42h-14zM227 171v22h4a7 11 0 0 0 0-22z"/>
   </g>
 </svg>
