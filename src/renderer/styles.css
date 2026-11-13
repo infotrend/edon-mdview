@@ -55,11 +55,7 @@ button:disabled { opacity: .35; cursor: default; }
 #app { display: flex; flex-direction: column; height: 100%; }
 
 .topbar { height: 62px; min-height: 62px; display: flex; align-items: center; gap: 20px; padding: 0 18px; background: var(--surface); border-bottom: 1px solid var(--border); z-index: 5; }
-.brand { display: flex; align-items: center; gap: 9px; user-select: none; }
-.brand-mark, .welcome-logo { display: inline-flex; align-items: center; justify-content: center; }
-.brand-mark { width: 34px; height: 34px; }
-.brand-mark .edon-logo { width: 34px; height: 34px; }
-.brand-name { font-weight: 650; font-size: 16px; letter-spacing: -.3px; white-space: nowrap; }
+.welcome-logo { display: inline-flex; align-items: center; justify-content: center; }
 .toolbar-group, .toolbar-actions { display: flex; align-items: center; gap: 7px; }
 .toolbar-actions { margin-left: auto; }
 .button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border: 1px solid var(--border); background: var(--surface-raised); padding: 8px 13px; border-radius: 7px; cursor: pointer; font-weight: 550; transition: background .15s, border-color .15s, transform .15s; }
@@ -278,7 +274,6 @@ kbd { display: inline-block; min-width: 20px; padding: 1px 5px; margin-right: 3p
 ::-webkit-scrollbar-thumb:hover { background: var(--text-faint); border: 3px solid transparent; background-clip: padding-box; }
 
 @media (max-width: 920px) {
-  .brand-name { display: none; }
   .toolbar-actions .button span { display: none; }
   .topbar { gap: 12px; }
   .document-heading { flex: 1; }
