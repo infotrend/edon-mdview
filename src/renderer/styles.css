@@ -168,7 +168,7 @@ html[data-theme="light"] .hljs-number, html[data-theme="light"] .hljs-symbol, ht
 .welcome-logo .edon-logo { width: 96px; height: 96px; }
 .eyebrow { color: var(--accent); font-size: 10px; letter-spacing: 2.2px; font-weight: 700; margin: 0 0 10px; }
 .welcome h1 { border: 0; padding: 0; margin: 0; font-size: 38px; letter-spacing: -1.2px; }
-.welcome-lead { color: var(--text-soft); max-width: 530px; margin: 16px auto 25px; line-height: 1.65; }
+.welcome .welcome-lead { color: var(--text-soft); max-width: 530px; margin: 16px auto 25px; line-height: 1.65; }
 .welcome-hint { color: var(--text-faint); font-size: 11px; margin-top: 12px; }
 .feature-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 50px; }
 .feature-grid > div { display: flex; flex-direction: column; gap: 5px; padding: 17px; background: var(--surface); border: 1px solid var(--border); border-radius: 9px; }
