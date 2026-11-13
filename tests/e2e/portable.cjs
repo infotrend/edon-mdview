@@ -8,7 +8,7 @@ const net = require('node:net');
 const { spawn, spawnSync } = require('node:child_process');
 const { once } = require('node:events');
 
-const executablePath = path.resolve(process.argv[2] || 'release/EDON-MDView-Portable-1.0.1-x64.exe');
+const executablePath = path.resolve(process.argv[2] || 'release/EDON-MDView-Portable-1.1.0-x64.exe');
 const root = path.resolve(__dirname, '..', '..');
 const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'mdview-portable-test-'));
 const documentPath = path.join(temp, 'documento.md');
@@ -44,8 +44,12 @@ async function waitForDebugger(port) {
 
 async function run() {
   const port = await availablePort();
+  // Own profile: the single-instance lock must not hand the test document to a copy the user has open.
+  const env = { ...process.env, EDON_MDVIEW_USER_DATA: path.join(temp, 'profilo') };
+  delete env.ELECTRON_RUN_AS_NODE;
   launcher = spawn(executablePath, [documentPath, `--remote-debugging-port=${port}`], {
     cwd: temp,
+    env,
     stdio: 'ignore',
   });
   launcher.once('exit', () => { launcherExited = true; });

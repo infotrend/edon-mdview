@@ -536,7 +536,7 @@ async function exportDocument() {
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="generator" content="EDON MDView 1.0.0">
+<meta name="generator" content="EDON MDView">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src data: https: http:;">
 <title>${title}</title>
 <style>${collectedStyles()}</style>
