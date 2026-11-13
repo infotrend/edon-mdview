@@ -1,6 +1,6 @@
 # EDON MDView
 
-Visualizzatore Markdown desktop per Windows 10 e 11 (64 bit), con interfaccia in italiano e funzionamento locale.
+Visualizzatore ed editor visivo Markdown desktop per Windows 10 e 11 (64 bit), con interfaccia in italiano e funzionamento locale.
 
 **Sviluppatore:** INFOTREND SRL  
 **Licenza:** [FSL-1.1-MIT](LICENSE)
@@ -17,7 +17,7 @@ Non trovavamo un md viewer decente ed abbiamo deciso di farlo: lo abbiamo condiv
 2. Leggi e accetta la licenza nel programma di installazione; non sono necessari privilegi di amministratore.
 3. Avvia **EDON MDView** dal menu Start o dal collegamento sul desktop.
 
-L'installazione registra EDON MDView come visualizzatore per `.md`, `.markdown`, `.mdown` e `.mkd`. Puoi scegliere EDON MDView dal menu **Apri con** di Windows.
+L'installazione registra EDON MDView come applicazione per aprire e modificare `.md`, `.markdown`, `.mdown` e `.mkd`. Puoi scegliere EDON MDView dal menu **Apri con** di Windows.
 
 ### Versione portabile
 
@@ -30,18 +30,52 @@ Gli eseguibili includono tutto il necessario: Node.js non deve essere installato
 - Apertura tramite menu, trascinamento o riga di comando.
 - Rendering di titoli, tabelle, elenchi, attività, note, citazioni, collegamenti e codice evidenziato.
 - Indice navigabile e ricerca con risultati evidenziati.
+- Modifica visiva del documento con salvataggio in Markdown: si formatta con pulsanti e scorciatoie, senza scrivere i simboli a mano.
 - Temi chiaro e scuro, zoom e impostazioni persistenti.
-- Ricaricamento automatico quando il file viene salvato da un editor.
+- Ricaricamento automatico quando il file viene salvato da un altro programma.
 - Apertura di collegamenti ad altri documenti Markdown locali.
 - Immagini locali e remote; quelle locali vengono incorporate nell'HTML esportato.
 - Esportazione HTML autonoma e stampa, anche in PDF tramite la finestra di stampa di Windows.
 - Elenco dei file recenti e associazione alle estensioni Markdown.
+
+## Modifica visiva
+
+Il pulsante **Modifica** (`Ctrl+E`) trasforma il documento visualizzato in un editor: il testo si scrive direttamente nella pagina e la barra degli strumenti applica la formattazione. La lettura resta la modalità predefinita.
+
+- **Strumenti:** titoli da 1 a 6, grassetto, corsivo, barrato, codice in linea, blocco di codice con linguaggio, elenchi puntati, numerati e di attività, citazione, collegamento, immagine, tabella (aggiunta e rimozione di righe e colonne), linea orizzontale, annulla e ripeti.
+- **Salvataggio:** **Salva** (`Ctrl+S`) scrive sul file aperto, **Salva con nome** (`Ctrl+Maiusc+S`) su un nuovo file. Un pallino nel titolo e la barra di stato segnalano le modifiche non salvate; prima di chiudere, aprire un altro documento o uscire dalla modifica l'app chiede se salvarle.
+- **Modifiche esterne:** se il file cambia su disco mentre ci sono modifiche non salvate, l'app chiede se ricaricarlo o mantenere il proprio lavoro; senza modifiche in corso lo aggiorna da sola.
+- **Ricerca:** disponibile in modalità lettura.
+
+### Fedeltà del Markdown
+
+Il salvataggio riscrive solo i blocchi realmente modificati (un paragrafo, un elenco, una tabella…): tutto il resto del file resta identico, byte per byte, compresi i fine riga. Aprire un documento, entrare in modifica e salvare senza toccare nulla non cambia il file.
+
+I costrutti senza un equivalente visivo sono mostrati come elementi protetti: non si modificano dall'editor, ma si possono spostare o eliminare e vengono salvati esattamente come sono.
+
+- blocchi HTML e tag HTML in linea (per esempio `<kbd>` o `<br>`);
+- note a piè di pagina: richiami `[^1]` e definizioni;
+- definizioni di collegamento in stile riferimento (`[rif]: indirizzo`);
+- intestazione YAML (front matter) in testa al file.
+
+Dentro un blocco modificato il Markdown viene uniformato:
+
+- enfasi con `*` e `**`, elenchi con `-`, numerazione `1.` `2.` `3.`, titoli sempre con `#`, linee orizzontali con `---`;
+- codice indentato trasformato in blocco delimitato da ` ``` `, tabelle con barre compatte (l'allineamento delle colonne resta);
+- collegamenti `[testo][rif]` riscritti come `[testo](indirizzo)`;
+- righe spezzate a mano dentro un paragrafo riunite in una sola riga;
+- entità come `&nbsp;` sostituite dal carattere corrispondente;
+- modificare una voce riscrive l'intero elenco, modificare una cella l'intera tabella.
+
+Le celle delle tabelle contengono solo testo in linea. In modifica `--` e le virgolette appaiono come sono scritti nel file: la sostituzione tipografica avviene solo in lettura.
 
 ## Scorciatoie
 
 | Azione | Tasti |
 |---|---|
 | Apri | `Ctrl+O` |
+| Modifica documento | `Ctrl+E` |
+| Salva / Salva con nome | `Ctrl+S` / `Ctrl+Maiusc+S` |
 | Cerca | `Ctrl+F` |
 | Risultato successivo / precedente | `F3` / `Maiusc+F3` |
 | Ricarica | `F5` |
@@ -51,6 +85,20 @@ Gli eseguibili includono tutto il necessario: Node.js non deve essere installato
 | Stampa | `Ctrl+P` |
 | Zoom | `Ctrl++`, `Ctrl+-`, `Ctrl+0` |
 
+In modalità modifica:
+
+| Azione | Tasti |
+|---|---|
+| Annulla / Ripeti | `Ctrl+Z` / `Ctrl+Y` |
+| Grassetto, corsivo | `Ctrl+B`, `Ctrl+I` |
+| Barrato, codice in linea | `Ctrl+Maiusc+X`, `Ctrl+Maiusc+C` |
+| Collegamento | `Ctrl+K` |
+| Titolo 1…6, paragrafo | `Ctrl+Alt+1`…`6`, `Ctrl+Alt+0` |
+| Elenco puntato, numerato, di attività | `Ctrl+Maiusc+8`, `Ctrl+Maiusc+7`, `Ctrl+Maiusc+9` |
+| Citazione, blocco di codice | `Ctrl+Maiusc+B`, `Ctrl+Alt+C` |
+| Rientra / riduci una voce di elenco | `Tab` / `Maiusc+Tab` |
+| A capo nella stessa riga | `Maiusc+Invio` |
+
 Da riga di comando, dopo l'installazione:
 
 ```powershell
@@ -59,7 +107,7 @@ Da riga di comando, dopo l'installazione:
 
 ## Riservatezza e sicurezza
 
-EDON MDView non contiene telemetria e non invia i documenti a servizi esterni. Il rendering elimina script, moduli, iframe e gestori di eventi; i collegamenti HTTP si aprono nel browser predefinito. Le risorse locali sono limitate alla cartella del documento aperto. Un documento che contiene immagini remote può richiedere quelle immagini al relativo server.
+EDON MDView non contiene telemetria e non invia i documenti a servizi esterni. Il rendering elimina script, moduli, iframe e gestori di eventi; i collegamenti HTTP si aprono nel browser predefinito. Le risorse locali sono limitate alla cartella del documento aperto. Anche in modifica il contenuto resta sanificato, e il salvataggio scrive soltanto sul file aperto o su quello scelto nella finestra **Salva con nome**. Un documento che contiene immagini remote può richiedere quelle immagini al relativo server.
 
 I documenti e le singole immagini incorporate hanno un limite di 25 MB ciascuno. I file `.txt` possono essere aperti come testo Markdown.
 
@@ -80,4 +128,4 @@ npm test        # test unitari + finestra Electron reale
 npm run dist    # genera installer e versione portabile in release/
 ```
 
-Il progetto usa Electron, markdown-it, DOMPurify e highlight.js. I test end-to-end usano una copia temporanea dei documenti di prova e non modificano i file originali.
+Il progetto usa Electron, markdown-it, DOMPurify, highlight.js e, per la modifica visiva, Tiptap (ProseMirror); tutte le librerie sono incluse nell'app e funzionano senza rete. I test end-to-end usano una copia temporanea dei documenti di prova e un profilo separato (`EDON_MDVIEW_USER_DATA`): non modificano i file originali e non interferiscono con una copia dell'app già aperta.

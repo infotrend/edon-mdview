@@ -2,7 +2,7 @@
   "name": "edon-mdview",
   "productName": "EDON MDView",
   "version": "1.0.1",
-  "description": "Visualizzatore Markdown sicuro e veloce per Windows, sviluppato da INFOTREND SRL",
+  "description": "Visualizzatore ed editor Markdown sicuro e veloce per Windows, sviluppato da INFOTREND SRL",
   "private": true,
   "license": "FSL-1.1-MIT",
   "main": "src/main.js",
@@ -75,7 +75,7 @@
           ],
           "name": "Markdown",
           "description": "Documento Markdown",
-          "role": "Viewer"
+          "role": "Editor"
         }
       ]
     },
