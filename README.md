@@ -7,7 +7,7 @@ Visualizzatore Markdown desktop per Windows 10 e 11 (64 bit), con interfaccia in
 
 ## Perchè
 
-Non trovavo un md viewer decente ed abbiamo deciso di farlo: lo abbiamo condiviso sperando possa essere utile anche ad altri.
+Non trovavamo un md viewer decente ed abbiamo deciso di farlo: lo abbiamo condiviso sperando possa essere utile anche ad altri.
 
 ## Avvio
 
