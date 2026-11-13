@@ -229,6 +229,101 @@ async function run() {
   assert.equal(read(documentPath), untouched);
   console.log('OK modalità modifica senza modifiche: file identico, contenuto sanificato e blocchi protetti');
 
+  // ---- Ricerca in modalità modifica: evidenziazioni come decorazioni, il documento non cambia.
+  const highlights = `${editor} mark.search-highlight`;
+  await toggleEditMode(page);
+  await expect(page.locator(`${editor} img[src^="mdview:"]`)).toHaveCount(1);
+  await expect(page.locator('#search-button')).toBeEnabled();
+  const cleanEditor = await page.locator(editor).innerHTML();
+  await page.locator('#search-button').click();
+  await expect(page.locator('#search-panel')).toBeVisible();
+  await page.locator('#search-input').fill('funzion');
+  await expect(page.locator(highlights)).toHaveText(Array(5).fill('Funzion'));
+  await expect(page.locator(`${highlights}.current`)).toHaveCount(1);
+  await expect(page.locator('#search-count')).toHaveText('1 di 5');
+  await page.keyboard.press('Enter');
+  await expect(page.locator('#search-count')).toHaveText('2 di 5');
+  await page.keyboard.press('F3');
+  await expect(page.locator('#search-count')).toHaveText('3 di 5');
+  await page.keyboard.press('Shift+F3');
+  await expect(page.locator('#search-count')).toHaveText('2 di 5');
+  await page.keyboard.press('Shift+Enter');
+  await expect(page.locator('#search-count')).toHaveText('1 di 5');
+  await page.locator('#search-previous').click();
+  await expect(page.locator('#search-count')).toHaveText('5 di 5');
+  await expect(page.locator(`${highlights}.current`)).toHaveCount(1);
+  await expect(page.locator(`${highlights}.current`)).toBeInViewport();
+  await page.locator('#search-next').click();
+  await expect(page.locator('#search-count')).toHaveText('1 di 5');
+  await expect(page).toHaveTitle('documento.md — EDON MDView');
+  await expect(page.locator('#save-button')).toBeDisabled();
+  await expect(page.locator('#dirty-indicator')).toBeHidden();
+  await page.locator('#search-close').click();
+  await expect(page.locator('#search-panel')).toBeHidden();
+  await expect(page.locator(`${editor} mark`)).toHaveCount(0);
+  assert.equal(await page.locator(editor).innerHTML(), cleanEditor);
+  // Chiudendo dal pannello il risultato attivo resta selezionato nell'editor, pronto per essere modificato.
+  assert.equal(await page.evaluate(() => getSelection().toString()), 'Funzion');
+  assert.equal(await page.evaluate((selector) => document.activeElement === document.querySelector(selector), editor), true);
+  await expect(page).toHaveTitle('documento.md — EDON MDView');
+  console.log('OK ricerca in modalità modifica: conteggio, evidenziazione, navigazione e documento non modificato');
+
+  // «Cerca nel documento» del menu (Ctrl+F) arriva come messaggio dal processo principale.
+  await application.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].webContents.send('search:open'));
+  await expect(page.locator('#search-panel')).toBeVisible();
+  await expect(page.locator('.toast', { hasText: 'modalità lettura' })).toHaveCount(0);
+  await page.locator('#search-input').fill('PROVA. questo');
+  await expect(page.locator('#search-count')).toHaveText('1 di 1');
+  await expect(page.locator(highlights)).toHaveText(['prova', '. Questo']);
+  await page.locator('#search-input').fill('supportate');
+  await expect(page.locator('#search-count')).toHaveText('0 risultati');
+  await expect(page.locator(highlights)).toHaveCount(0);
+  await page.locator('#search-input').fill('funzion');
+  await expect(page.locator('#search-count')).toHaveText('1 di 5');
+  const searchExportPath = path.join(temp, 'esportato-con-ricerca.html');
+  await application.evaluate(({ dialog }, destination) => {
+    dialog.showSaveDialog = async () => ({ canceled: false, filePath: destination });
+  }, searchExportPath);
+  await page.locator('#export-button').click();
+  await expect.poll(() => fs.existsSync(searchExportPath), { timeout: 15000 }).toBe(true);
+  assert.doesNotMatch(read(searchExportPath), /<mark\b/);
+  await typeAtEnd(page, page.locator(`${editor} h1`).first(), ' funzionale');
+  await expect(page.locator(highlights)).toHaveCount(6);
+  await expect(page.locator('#search-count')).toHaveText('2 di 6');
+  await expect(page).toHaveTitle('● documento.md — EDON MDView');
+  for (let attempt = 0; attempt < 12 && (await page.title()).startsWith('●'); attempt += 1) await page.keyboard.press('Control+z');
+  await expect(page).toHaveTitle('documento.md — EDON MDView');
+  await expect(page.locator(highlights)).toHaveCount(5);
+  await expect(page.locator('#search-count')).toHaveText('1 di 5');
+  await page.keyboard.press('Escape');
+  await expect(page.locator('#search-panel')).toBeHidden();
+  await expect(page.locator(`${editor} mark`)).toHaveCount(0);
+  console.log('OK ricerca mentre si scrive: risultati aggiornati, niente evidenziazioni nell’HTML esportato né dopo Esc');
+
+  // Il cambio di modalità chiude la ricerca in entrambe le direzioni.
+  await page.locator('#search-button').click();
+  await page.locator('#search-input').fill('markdown');
+  await expect(page.locator(highlights)).toHaveCount(2);
+  await toggleEditMode(page);
+  await expect(page.locator('#edit-toolbar')).toBeHidden();
+  await expect(page.locator('#search-panel')).toBeHidden();
+  await expect(page.locator('#content mark')).toHaveCount(0);
+  await page.locator('#search-button').click();
+  await page.locator('#search-input').fill('markdown');
+  await expect(page.locator('#content mark.search-highlight')).toHaveCount(2);
+  await expect(page.locator('#search-count')).toHaveText('1 di 2');
+  await toggleEditMode(page);
+  await expect(page.locator(editor)).toBeVisible();
+  await expect(page.locator('#search-panel')).toBeHidden();
+  await expect(page.locator(`${editor} mark`)).toHaveCount(0);
+  await expect(page.locator('#search-input')).toHaveValue('');
+  await expect(page).toHaveTitle('documento.md — EDON MDView');
+  await toggleEditMode(page);
+  await expect(page.locator('#edit-toolbar')).toBeHidden();
+  await expect(page.locator('#content mark')).toHaveCount(0);
+  assert.equal(read(documentPath), untouched);
+  console.log('OK il cambio di modalità chiude la ricerca e il file resta identico');
+
   // ---- Formattazione dalla barra e da tastiera, poi salvataggio.
   fs.writeFileSync(editPath, EDIT_SOURCE, 'utf8');
   await openThroughDialog(page, editPath);

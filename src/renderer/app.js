@@ -41,6 +41,7 @@ let savedAt = null;
 let saveInProgress = null;
 let outlineTimer = null;
 let lastModeToggle = 0;
+let searchTimer = null;
 const imageCache = new Map();
 
 function readPreference(key, fallback) {
@@ -148,18 +149,31 @@ function updateStats() {
   $('#reading-time').textContent = `${Math.max(1, Math.ceil(words / 220))} min`;
 }
 
+/** The search of the document on screen: marks in the rendered article, decorations in the editor. */
+function activeSearch() {
+  return visualEditor ? visualEditor.search : documentSearch;
+}
+
 function updateSearchCount() {
-  const count = documentSearch.matches.length;
-  const position = count ? documentSearch.current + 1 : 0;
+  const search = activeSearch();
+  const count = search.matches.length;
+  const position = count ? search.current + 1 : 0;
   searchCount.textContent = count ? `${position} di ${count}` : '0 risultati';
+}
+
+function runSearch() {
+  activeSearch().search(searchInput.value);
+  updateSearchCount();
+}
+
+function stepSearch(direction) {
+  const search = activeSearch();
+  search.activate(search.current + direction);
+  updateSearchCount();
 }
 
 function openSearch() {
   if (!currentDocument) return;
-  if (isEditing()) {
-    showToast('La ricerca è disponibile in modalità lettura.');
-    return;
-  }
   searchPanel.hidden = false;
   $('#search-button').classList.add('active');
   searchInput.focus();
@@ -167,13 +181,21 @@ function openSearch() {
 }
 
 function closeSearch(restoreFocus = true) {
-  const wasOpen = !searchPanel.hidden;
+  const returnFocus = !searchPanel.hidden && restoreFocus;
+  clearTimeout(searchTimer);
   searchPanel.hidden = true;
   $('#search-button').classList.remove('active');
   searchInput.value = '';
   documentSearch.clear();
+  if (visualEditor) {
+    // Closing from the search panel leaves the active match selected, ready to be edited.
+    if (returnFocus && !visualEditor.editor.view.hasFocus()) visualEditor.search.selectCurrent();
+    visualEditor.search.clear();
+  }
   updateSearchCount();
-  if (wasOpen && restoreFocus) $('#search-button').focus();
+  if (!returnFocus) return;
+  if (visualEditor) visualEditor.focus();
+  else $('#search-button').focus();
 }
 
 /** Maps a document image reference to a URL the window is allowed to load. */
@@ -297,9 +319,12 @@ function mountEditor() {
     renderRaw: renderMarkdown,
     resolveImage,
     onChange: () => { refreshDirty(); scheduleOutline(); },
-    onStateChange: () => toolbar.refresh(),
+    // Typing with the search open changes the matches: the counter follows the editor.
+    onStateChange: () => { toolbar.refresh(); if (!searchPanel.hidden) updateSearchCount(); },
   });
   toolbar.attach(visualEditor.editor);
+  // The editor was rebuilt (file reloaded from disk) while searching: highlight the new document.
+  if (!searchPanel.hidden) runSearch();
 }
 
 function unmountEditor() {
@@ -318,7 +343,6 @@ function setEditingChrome(editing) {
   $('#save-button').hidden = !editing;
   $('#edit-button').classList.toggle('active', editing);
   $('#edit-button').setAttribute('aria-pressed', String(editing));
-  $('#search-button').disabled = editing;
 }
 
 function enterEditMode() {
@@ -536,8 +560,8 @@ $('#sidebar-button').addEventListener('click', toggleSidebar);
 $('#theme-button').addEventListener('click', () => setTheme(currentTheme === 'dark' ? 'light' : 'dark'));
 $('#search-button').addEventListener('click', () => searchPanel.hidden ? openSearch() : closeSearch());
 $('#search-close').addEventListener('click', () => closeSearch());
-$('#search-next').addEventListener('click', () => { documentSearch.activate(documentSearch.current + 1); updateSearchCount(); });
-$('#search-previous').addEventListener('click', () => { documentSearch.activate(documentSearch.current - 1); updateSearchCount(); });
+$('#search-next').addEventListener('click', () => stepSearch(1));
+$('#search-previous').addEventListener('click', () => stepSearch(-1));
 $('#export-button').addEventListener('click', exportDocument);
 $('#print-button').addEventListener('click', () => window.mdview.printDocument());
 $('#edit-button').addEventListener('click', toggleEditMode);
@@ -559,19 +583,14 @@ shortcutsDialog.addEventListener('click', (event) => {
   if (event.target === shortcutsDialog) shortcutsDialog.close();
 });
 
-let searchTimer;
 searchInput.addEventListener('input', () => {
   clearTimeout(searchTimer);
-  searchTimer = setTimeout(() => {
-    documentSearch.search(searchInput.value);
-    updateSearchCount();
-  }, 120);
+  searchTimer = setTimeout(runSearch, 120);
 });
 searchInput.addEventListener('keydown', (event) => {
   if (event.key === 'Enter') {
     event.preventDefault();
-    documentSearch.activate(documentSearch.current + (event.shiftKey ? -1 : 1));
-    updateSearchCount();
+    stepSearch(event.shiftKey ? -1 : 1);
   }
 });
 
@@ -679,11 +698,11 @@ window.addEventListener('keydown', (event) => {
       toolbar.openLink();
     }
   }
-  if (event.key === 'Escape' && !searchPanel.hidden) closeSearch();
+  // With a dialog open Esc closes the dialog only: the search stays as it is.
+  if (event.key === 'Escape' && !searchPanel.hidden && !document.querySelector('dialog[open]')) closeSearch();
   if (event.key === 'F3' && !searchPanel.hidden) {
     event.preventDefault();
-    documentSearch.activate(documentSearch.current + (event.shiftKey ? -1 : 1));
-    updateSearchCount();
+    stepSearch(event.shiftKey ? -1 : 1);
   }
 });
 

@@ -45,7 +45,7 @@ Il pulsante **Modifica** (`Ctrl+E`) trasforma il documento visualizzato in un ed
 - **Strumenti:** titoli da 1 a 6, grassetto, corsivo, barrato, codice in linea, blocco di codice con linguaggio, elenchi puntati, numerati e di attività, citazione, collegamento, immagine, tabella (aggiunta e rimozione di righe e colonne), linea orizzontale, annulla e ripeti.
 - **Salvataggio:** **Salva** (`Ctrl+S`) scrive sul file aperto, **Salva con nome** (`Ctrl+Maiusc+S`) su un nuovo file. Un pallino nel titolo e la barra di stato segnalano le modifiche non salvate; prima di chiudere, aprire un altro documento o uscire dalla modifica l'app chiede se salvarle.
 - **Modifiche esterne:** se il file cambia su disco mentre ci sono modifiche non salvate, l'app chiede se ricaricarlo o mantenere il proprio lavoro; senza modifiche in corso lo aggiorna da sola.
-- **Ricerca:** disponibile in modalità lettura.
+- **Ricerca:** `Ctrl+F` funziona anche durante la modifica, senza alterare il documento; il contenuto degli elementi protetti non viene cercato.
 
 ### Fedeltà del Markdown
 

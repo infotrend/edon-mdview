@@ -3,6 +3,7 @@ const { Selection } = require('@tiptap/pm/state');
 const { createExtensions, RAW_LABELS } = require('./extensions');
 const { createMarkdownBridge } = require('./markdown-bridge');
 const { highlighter } = require('./highlight');
+const { DocumentSearchExtension, EditorSearch } = require('./search');
 
 function element(tag, className, text) {
   const node = document.createElement(tag);
@@ -116,7 +117,8 @@ function createVisualEditor({ host, source, renderRaw, resolveImage, onChange, o
     },
   };
 
-  const extensions = createExtensions({ lowlight: highlighter, nodeViews });
+  // The search extension only adds decorations: the schema stays the one shared with the Markdown bridge.
+  const extensions = [...createExtensions({ lowlight: highlighter, nodeViews }), DocumentSearchExtension];
   let bridge = null;
   let origin = null;
 
@@ -144,6 +146,7 @@ function createVisualEditor({ host, source, renderRaw, resolveImage, onChange, o
   return {
     editor,
     get root() { return editor.view.dom; },
+    search: new EditorSearch(editor.view),
     getMarkdown: () => bridge.serialize(editor.state.doc, origin),
     focus: () => editor.view.focus(),
     destroy: () => editor.destroy(),
