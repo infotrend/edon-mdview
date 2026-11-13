@@ -1,0 +1,153 @@
+const { Editor } = require('@tiptap/core');
+const { Selection } = require('@tiptap/pm/state');
+const { createExtensions, RAW_LABELS } = require('./extensions');
+const { createMarkdownBridge } = require('./markdown-bridge');
+const { highlighter } = require('./highlight');
+
+function element(tag, className, text) {
+  const node = document.createElement(tag);
+  if (className) node.className = className;
+  if (text !== undefined) node.textContent = text;
+  return node;
+}
+
+/**
+ * Visual Markdown editor. The DOM is always built from the editor schema, never from document HTML:
+ * the only HTML rendered as such is the content of protected blocks, which goes through `renderRaw`
+ * (the reader's sanitizing renderer).
+ */
+function createVisualEditor({ host, source, renderRaw, resolveImage, onChange, onStateChange }) {
+  const nodeViews = {
+    rawBlock: ({ node }) => {
+      const { kind, source: raw } = node.attrs;
+      const dom = element('div', 'raw-block');
+      dom.dataset.kind = kind;
+      dom.contentEditable = 'false';
+      dom.append(element('div', 'raw-block-label', `${RAW_LABELS[kind] || RAW_LABELS.markdown} · contenuto preservato, non modificabile`));
+      const body = element('div', 'raw-block-body');
+      if (kind === 'html') {
+        body.innerHTML = renderRaw(raw);
+        for (const image of body.querySelectorAll('img[src]')) {
+          const original = image.getAttribute('src');
+          image.removeAttribute('src');
+          resolveImage(original).then((url) => { image.src = url; }).catch(() => {});
+        }
+      }
+      if (kind !== 'html' || (!body.textContent.trim() && !body.querySelector('img, hr, table, svg, video, audio'))) {
+        body.replaceChildren(element('pre', 'raw-block-source', raw));
+      }
+      dom.append(body);
+      return {
+        dom,
+        ignoreMutation: () => true,
+        update: (updated) => updated.type === node.type && updated.attrs.kind === kind && updated.attrs.source === raw,
+      };
+    },
+
+    image: ({ node }) => {
+      const dom = document.createElement('img');
+      let current = null;
+      const apply = (attrs) => {
+        dom.alt = attrs.alt || '';
+        if (attrs.title) dom.title = attrs.title;
+        else dom.removeAttribute('title');
+        if (attrs.src === current) return;
+        current = attrs.src;
+        dom.removeAttribute('src');
+        resolveImage(attrs.src).then((url) => { if (current === attrs.src) dom.src = url; }).catch(() => {});
+      };
+      dom.referrerPolicy = 'no-referrer';
+      dom.decoding = 'async';
+      apply(node.attrs);
+      return {
+        dom,
+        update(updated) {
+          if (updated.type !== node.type) return false;
+          apply(updated.attrs);
+          return true;
+        },
+      };
+    },
+
+    codeBlock: ({ node, getPos, editor }) => {
+      let current = node;
+      const dom = element('div', 'code-block');
+      const input = element('input', 'code-language');
+      input.type = 'text';
+      input.placeholder = 'linguaggio';
+      input.spellcheck = false;
+      input.autocomplete = 'off';
+      input.setAttribute('list', 'code-languages');
+      input.setAttribute('aria-label', 'Linguaggio del blocco di codice');
+      input.value = node.attrs.language || '';
+      const pre = document.createElement('pre');
+      const code = document.createElement('code');
+      pre.append(code);
+      dom.append(input, pre);
+
+      const commit = () => {
+        const language = input.value.trim().split(/\s+/)[0] || null;
+        const position = typeof getPos === 'function' ? getPos() : undefined;
+        if (language === current.attrs.language || typeof position !== 'number') return;
+        editor.view.dispatch(editor.state.tr.setNodeAttribute(position, 'language', language));
+      };
+      input.addEventListener('change', commit);
+      input.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter' || event.key === 'Escape') {
+          event.preventDefault();
+          if (event.key === 'Escape') input.value = current.attrs.language || '';
+          commit();
+          editor.view.focus();
+        }
+      });
+
+      return {
+        dom,
+        contentDOM: code,
+        stopEvent: (event) => event.target === input,
+        ignoreMutation: (mutation) => !code.contains(mutation.target),
+        update(updated) {
+          if (updated.type !== node.type) return false;
+          current = updated;
+          if (document.activeElement !== input) input.value = updated.attrs.language || '';
+          return true;
+        },
+      };
+    },
+  };
+
+  const extensions = createExtensions({ lowlight: highlighter, nodeViews });
+  let bridge = null;
+  let origin = null;
+
+  const editor = new Editor({
+    element: host,
+    extensions,
+    content: '',
+    editorProps: {
+      attributes: { class: 'markdown-body editor-surface', spellcheck: 'false', 'aria-label': 'Contenuto del documento', role: 'textbox', 'aria-multiline': 'true' },
+    },
+    onUpdate: () => onChange && onChange(),
+    onTransaction: () => onStateChange && onStateChange(),
+  });
+
+  bridge = createMarkdownBridge(editor.schema);
+  const parsed = bridge.parse(source);
+  origin = parsed.origin;
+  // Loading the document is not an editing step: undo must never go back to an empty editor.
+  editor.chain()
+    .setMeta('addToHistory', false)
+    .setContent(parsed.doc, { emitUpdate: false })
+    .command(({ tr }) => { tr.setSelection(Selection.atStart(tr.doc)); return true; })
+    .run();
+
+  return {
+    editor,
+    get root() { return editor.view.dom; },
+    getMarkdown: () => bridge.serialize(editor.state.doc, origin),
+    focus: () => editor.view.focus(),
+    destroy: () => editor.destroy(),
+  };
+}
+
+module.exports = { createVisualEditor };

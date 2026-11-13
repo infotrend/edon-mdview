@@ -583,7 +583,7 @@ function createMarkdownBridge(schema) {
    * Writes the document back to Markdown. Blocks equal to the ones that were parsed keep their original
    * text and spacing; only new or modified blocks are generated.
    */
-  function serialize(doc, origin, options = {}) {
+  function serialize(doc, origin) {
     context = { doc, previous: null, markers: new WeakMap(), linkModes: [], literalTask: null, inTable: false };
     const emitted = [];
     doc.forEach((node, offset, index) => {
@@ -627,7 +627,7 @@ function createMarkdownBridge(schema) {
     });
     const final = emitted[emitted.length - 1];
     output += final.origin !== null && final.origin === last ? origin.suffix : origin.eol;
-    return options.final ? appendLostReferences(output, origin) : output;
+    return appendLostReferences(output, origin);
   }
 
   return { parse, serialize };

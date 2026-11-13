@@ -8,6 +8,9 @@ const {
   resolveLocalPath,
   resolveLinkedDocument,
   toResourceUrl,
+  contentHash,
+  ensureMarkdownExtension,
+  toDocumentReference,
 } = require('./main-utils');
 
 const MAX_DOCUMENT_SIZE = 25 * 1024 * 1024;
@@ -25,7 +28,21 @@ let watcher = null;
 let reloadTimer = null;
 let windowReady = false;
 let recentFiles = [];
+// Editing state. The renderer reports unsaved changes; `diskHash` identifies the file content the
+// renderer is working from, so the app's own writes and no-op file events never trigger a reload.
+let documentDirty = false;
+let documentBom = false;
+let diskHash = null;
+let saving = false;
+let closeConfirmed = false;
+let unsavedPrompt = null;
+let saveRequestId = 0;
+const pendingSaveRequests = new Map();
 const recentFilePath = () => path.join(app.getPath('userData'), 'recent-files.json');
+
+// Automated tests run with their own profile: the single-instance lock and the recent files then
+// belong to the test run, which can never hand its documents to a copy the user already has open.
+if (process.env.EDON_MDVIEW_USER_DATA) app.setPath('userData', path.resolve(process.env.EDON_MDVIEW_USER_DATA));
 
 protocol.registerSchemesAsPrivileged([
   { scheme: 'mdview', privileges: { standard: true, secure: true, supportFetchAPI: true, stream: true } },
@@ -77,7 +94,142 @@ async function readDocument(filePath) {
     name: path.basename(resolved),
     content: content.replace(/^\uFEFF/, ''),
     modified: stat.mtimeMs,
+    bom: content.startsWith('\uFEFF'),
   };
+}
+
+function sendDocumentChanged(document) {
+  diskHash = contentHash(document.content);
+  documentBom = document.bom;
+  if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send('document:changed', document);
+}
+
+function askUnsavedChanges() {
+  if (!mainWindow || mainWindow.isDestroyed()) return Promise.resolve('discard');
+  if (!unsavedPrompt) {
+    const name = currentDocument ? path.basename(currentDocument) : 'documento';
+    unsavedPrompt = dialog.showMessageBox(mainWindow, {
+      type: 'warning',
+      title: 'Modifiche non salvate',
+      message: `Vuoi salvare le modifiche a \u00AB${name}\u00BB?`,
+      detail: 'Se non le salvi, le modifiche andranno perse.',
+      buttons: ['Salva', 'Non salvare', 'Annulla'],
+      defaultId: 0,
+      cancelId: 2,
+      noLink: true,
+    }).then(({ response }) => ['save', 'discard', 'cancel'][response] || 'cancel')
+      .finally(() => { unsavedPrompt = null; });
+  }
+  return unsavedPrompt;
+}
+
+function requestRendererSave() {
+  return new Promise((resolve) => {
+    if (!mainWindow || mainWindow.isDestroyed()) { resolve(false); return; }
+    saveRequestId += 1;
+    const id = saveRequestId;
+    const timer = setTimeout(() => { pendingSaveRequests.delete(id); resolve(false); }, 120000);
+    pendingSaveRequests.set(id, (saved) => { clearTimeout(timer); pendingSaveRequests.delete(id); resolve(saved); });
+    mainWindow.webContents.send('document:save-request', { id });
+  });
+}
+
+/** Resolves to true when it is safe to drop the current editor state (saved, discarded or nothing to lose). */
+async function confirmUnsavedChanges() {
+  if (!documentDirty || !mainWindow || mainWindow.isDestroyed()) return true;
+  const choice = await askUnsavedChanges();
+  if (choice === 'cancel') return false;
+  if (choice === 'save') return requestRendererSave();
+  return true;
+}
+
+function validateContent(content) {
+  if (typeof content !== 'string' || content.includes('\0')) throw new Error('Contenuto del documento non valido.');
+  if (Buffer.byteLength(content, 'utf8') > MAX_DOCUMENT_SIZE) throw new Error('Il documento supera il limite di 25 MB.');
+}
+
+async function writeDocument(filePath, content) {
+  saving = true;
+  try {
+    await fsp.writeFile(filePath, `${documentBom ? '\uFEFF' : ''}${content}`, 'utf8');
+    diskHash = contentHash(content);
+    documentDirty = false;
+  } finally {
+    saving = false;
+  }
+}
+
+/** Writes the editor content to the open document only: the renderer never supplies a path. */
+async function saveDocument(content) {
+  try {
+    if (!currentDocument) throw new Error('Nessun documento aperto.');
+    validateContent(content);
+    const target = currentDocument;
+    let onDisk = null;
+    try {
+      onDisk = await readDocument(target);
+    } catch (error) {
+      if (error.code !== 'ENOENT') throw error;
+    }
+    if (onDisk && contentHash(onDisk.content) !== diskHash) {
+      sendDocumentChanged(onDisk);
+      return { status: 'conflict' };
+    }
+    await writeDocument(target, content);
+    return { status: 'saved', path: target, name: path.basename(target) };
+  } catch (error) {
+    return { status: 'error', message: error.message };
+  }
+}
+
+async function saveDocumentAs(content) {
+  try {
+    if (!currentDocument || !mainWindow) throw new Error('Nessun documento aperto.');
+    validateContent(content);
+    const result = await dialog.showSaveDialog(mainWindow, {
+      title: 'Salva con nome',
+      defaultPath: currentDocument,
+      filters: [
+        { name: 'Documenti Markdown', extensions: ['md', 'markdown', 'mdown', 'mkd'] },
+        { name: 'File di testo', extensions: ['txt'] },
+      ],
+    });
+    if (result.canceled || !result.filePath) return { status: 'canceled' };
+    const chosen = path.resolve(result.filePath);
+    const target = ensureMarkdownExtension(chosen);
+    // The system dialog only confirmed overwriting the name the user typed.
+    if (target !== chosen && fs.existsSync(target)) throw new Error(`Esiste gi\u00E0 un file \u00AB${path.basename(target)}\u00BB: scegli un altro nome.`);
+    const previous = currentDocument;
+    stopWatching();
+    try {
+      await writeDocument(target, content);
+    } catch (error) {
+      watchDocument(previous);
+      throw error;
+    }
+    currentDocument = target;
+    watchDocument(target);
+    rememberDocument(target);
+    return { status: 'saved', path: target, name: path.basename(target) };
+  } catch (error) {
+    return { status: 'error', message: error.message };
+  }
+}
+
+async function chooseImage() {
+  if (!currentDocument || !mainWindow) return null;
+  const result = await dialog.showOpenDialog(mainWindow, {
+    title: 'Scegli un\'immagine',
+    defaultPath: path.dirname(currentDocument),
+    properties: ['openFile'],
+    filters: [{ name: 'Immagini', extensions: [...IMAGE_TYPES.keys()].map((extension) => extension.slice(1)) }],
+  });
+  if (result.canceled || !result.filePaths[0]) return null;
+  const reference = toDocumentReference(currentDocument, result.filePaths[0]);
+  if (!reference || !IMAGE_TYPES.has(path.extname(result.filePaths[0]).toLowerCase())) {
+    return { error: 'L\'immagine deve trovarsi nella cartella del documento o in una sua sottocartella.' };
+  }
+  return { reference, name: path.basename(result.filePaths[0]) };
 }
 
 function stopWatching() {
@@ -93,17 +245,20 @@ function watchDocument(filePath) {
     watcher = fs.watch(path.dirname(filePath), (eventType, filename) => {
       if (!currentDocument || (filename && filename.toString().toLowerCase() !== path.basename(filePath).toLowerCase())) return;
       clearTimeout(reloadTimer);
-      reloadTimer = setTimeout(async () => {
+      const check = async () => {
         if (!currentDocument || currentDocument !== filePath) return;
+        // Never read a file the app is still writing: wait for the save to finish.
+        if (saving) { reloadTimer = setTimeout(check, 120); return; }
         try {
           const document = await readDocument(filePath);
-          if (currentDocument === filePath && mainWindow && !mainWindow.isDestroyed()) {
-            mainWindow.webContents.send('document:changed', document);
-          }
+          if (saving) { reloadTimer = setTimeout(check, 120); return; }
+          if (currentDocument !== filePath || contentHash(document.content) === diskHash) return;
+          sendDocumentChanged(document);
         } catch (error) {
           if (currentDocument === filePath) notify('warning', `Ricaricamento non riuscito: ${error.message}`);
         }
-      }, 180);
+      };
+      reloadTimer = setTimeout(check, 180);
     });
     watcher.on('error', () => notify('warning', 'Aggiornamento automatico non disponibile per questo file.'));
   } catch {
@@ -113,8 +268,12 @@ function watchDocument(filePath) {
 
 async function loadDocument(filePath) {
   try {
+    if (!(await confirmUnsavedChanges())) return null;
     const document = await readDocument(filePath);
     currentDocument = document.path;
+    documentDirty = false;
+    documentBom = document.bom;
+    diskHash = contentHash(document.content);
     watchDocument(document.path);
     rememberDocument(document.path);
     if (mainWindow && !mainWindow.isDestroyed()) {
@@ -146,8 +305,7 @@ async function chooseAndOpen() {
 async function reloadDocument() {
   if (!currentDocument) return;
   try {
-    const document = await readDocument(currentDocument);
-    mainWindow?.webContents.send('document:changed', document);
+    sendDocumentChanged(await readDocument(currentDocument));
   } catch (error) {
     notify('error', error.message);
   }
@@ -165,6 +323,9 @@ function rebuildMenu() {
         { label: 'Apri…', accelerator: 'CmdOrCtrl+O', click: chooseAndOpen },
         { label: 'Apri recente', submenu: [...recentMenu, { type: 'separator' }, { label: 'Svuota elenco', enabled: recentFiles.length > 0, click: () => { recentFiles = []; saveRecentFiles(); rebuildMenu(); } }] },
         { type: 'separator' },
+        { label: 'Salva', accelerator: 'CmdOrCtrl+S', click: () => mainWindow?.webContents.send('document:save-request', { id: null }) },
+        { label: 'Salva con nome…', accelerator: 'CmdOrCtrl+Shift+S', click: () => mainWindow?.webContents.send('document:save-as-request') },
+        { type: 'separator' },
         { label: 'Ricarica', accelerator: 'F5', click: reloadDocument },
         { type: 'separator' },
         { label: 'Esporta HTML…', accelerator: 'CmdOrCtrl+Shift+E', click: () => mainWindow?.webContents.send('document:export-request') },
@@ -176,6 +337,12 @@ function rebuildMenu() {
     {
       label: 'Modifica',
       submenu: [
+        { label: 'Modifica documento', accelerator: 'CmdOrCtrl+E', click: () => mainWindow?.webContents.send('edit:toggle') },
+        { type: 'separator' },
+        // The editor keeps its own history: the shortcuts are shown here but handled by the page.
+        { label: 'Annulla', accelerator: 'CmdOrCtrl+Z', registerAccelerator: false, click: () => mainWindow?.webContents.send('edit:command', 'undo') },
+        { label: 'Ripeti', accelerator: 'CmdOrCtrl+Y', registerAccelerator: false, click: () => mainWindow?.webContents.send('edit:command', 'redo') },
+        { type: 'separator' },
         { role: 'copy', label: 'Copia' },
         { role: 'cut', label: 'Taglia' },
         { role: 'paste', label: 'Incolla' },
@@ -201,7 +368,7 @@ function rebuildMenu() {
       label: 'Aiuto',
       submenu: [
         { label: 'Scorciatoie da tastiera', click: () => mainWindow?.webContents.send('help:shortcuts') },
-        { label: 'Informazioni su EDON MDView', click: () => dialog.showMessageBox(mainWindow, { type: 'info', title: 'EDON MDView', message: 'EDON MDView 1.0.0', detail: 'Sviluppato da INFOTREND SRL\nLicenza FSL-1.1-MIT\n\nVisualizzatore Markdown per Windows\nRendering locale, sicuro e senza tracciamento.' }) },
+        { label: 'Informazioni su EDON MDView', click: () => dialog.showMessageBox(mainWindow, { type: 'info', title: 'EDON MDView', message: `EDON MDView ${app.getVersion()}`, detail: 'Sviluppato da INFOTREND SRL\nLicenza FSL-1.1-MIT\n\nVisualizzatore ed editor Markdown per Windows\nRendering locale, sicuro e senza tracciamento.' }) },
       ],
     },
   ];
@@ -236,11 +403,24 @@ function createWindow() {
       await loadDocument(file).catch(() => {});
     }
   });
+  mainWindow.on('close', (event) => {
+    if (!documentDirty || closeConfirmed) return;
+    event.preventDefault();
+    confirmUnsavedChanges().then((proceed) => {
+      if (!proceed || !mainWindow || mainWindow.isDestroyed()) return;
+      closeConfirmed = true;
+      mainWindow.close();
+    });
+  });
   mainWindow.on('closed', () => {
     stopWatching();
+    for (const resolve of [...pendingSaveRequests.values()]) resolve(false);
     mainWindow = null;
     windowReady = false;
     currentDocument = null;
+    documentDirty = false;
+    closeConfirmed = false;
+    diskHash = null;
   });
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
     if (/^(https?|mailto):/i.test(url)) shell.openExternal(url);
@@ -297,6 +477,15 @@ if (!singleInstance) {
       return loadDocument(filePath);
     });
     ipcMain.handle('document:reload', reloadDocument);
+    ipcMain.handle('document:save', (event, content) => saveDocument(content));
+    ipcMain.handle('document:save-as', (event, content) => saveDocumentAs(content));
+    ipcMain.handle('document:confirm-unsaved', () => askUnsavedChanges());
+    ipcMain.handle('document:choose-image', chooseImage);
+    ipcMain.on('document:dirty', (event, dirty) => { documentDirty = Boolean(dirty) && Boolean(currentDocument); });
+    ipcMain.on('document:save-result', (event, result) => {
+      const resolve = result && pendingSaveRequests.get(result.id);
+      if (resolve) resolve(Boolean(result.saved));
+    });
     ipcMain.handle('document:print', () => {
       if (!mainWindow || !currentDocument) return;
       mainWindow.webContents.print({ printBackground: true }, (success, reason) => {

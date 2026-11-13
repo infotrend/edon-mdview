@@ -11,6 +11,13 @@ contextBridge.exposeInMainWorld('mdview', {
   openDocument: (filePath) => ipcRenderer.invoke('document:open-path', filePath),
   openRelative: (reference) => ipcRenderer.invoke('document:open-relative', reference),
   reloadDocument: () => ipcRenderer.invoke('document:reload'),
+  // Saving never carries a path: the main process writes to the open document or asks the user where.
+  saveDocument: (content) => ipcRenderer.invoke('document:save', content),
+  saveDocumentAs: (content) => ipcRenderer.invoke('document:save-as', content),
+  confirmUnsaved: () => ipcRenderer.invoke('document:confirm-unsaved'),
+  chooseImage: () => ipcRenderer.invoke('document:choose-image'),
+  setDirty: (dirty) => ipcRenderer.send('document:dirty', Boolean(dirty)),
+  reportSaveResult: (id, saved) => ipcRenderer.send('document:save-result', { id, saved: Boolean(saved) }),
   printDocument: () => ipcRenderer.invoke('document:print'),
   exportDocument: (html) => ipcRenderer.invoke('document:export', html),
   resolveResources: (sources) => ipcRenderer.invoke('document:resolve-resources', sources),
@@ -27,4 +34,8 @@ contextBridge.exposeInMainWorld('mdview', {
   onExportRequest: (callback) => subscribe('document:export-request', callback),
   onPrintRequest: (callback) => subscribe('document:print-request', callback),
   onShortcuts: (callback) => subscribe('help:shortcuts', callback),
+  onSaveRequest: (callback) => subscribe('document:save-request', callback),
+  onSaveAsRequest: (callback) => subscribe('document:save-as-request', callback),
+  onEditToggle: (callback) => subscribe('edit:toggle', callback),
+  onEditCommand: (callback) => subscribe('edit:command', callback),
 });

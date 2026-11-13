@@ -1,4 +1,5 @@
 const path = require('node:path');
+const { createHash } = require('node:crypto');
 const { fileURLToPath } = require('node:url');
 
 const MARKDOWN_EXTENSIONS = new Set(['.md', '.markdown', '.mdown', '.mkd', '.txt']);
@@ -58,6 +59,24 @@ function toResourceUrl(filePath) {
   return `mdview://local/resource?path=${encodeURIComponent(path.resolve(filePath))}`;
 }
 
+function contentHash(content) {
+  return createHash('sha256').update(String(content), 'utf8').digest('hex');
+}
+
+/** A document saved under a new name must keep an extension the app is able to reopen. */
+function ensureMarkdownExtension(filePath) {
+  return isMarkdownPath(filePath) ? filePath : `${filePath}.md`;
+}
+
+/** Returns the Markdown reference (forward slashes, URL-encoded) for a file inside the document folder. */
+function toDocumentReference(currentDocument, filePath) {
+  if (!currentDocument || typeof filePath !== 'string' || !filePath) return null;
+  const root = path.dirname(path.resolve(currentDocument));
+  const resolved = path.resolve(filePath);
+  if (!isPathInside(root, resolved) || resolved === root) return null;
+  return path.relative(root, resolved).split(path.sep).map(encodeURIComponent).join('/');
+}
+
 module.exports = {
   MARKDOWN_EXTENSIONS,
   isMarkdownPath,
@@ -65,4 +84,7 @@ module.exports = {
   resolveLocalPath,
   resolveLinkedDocument,
   toResourceUrl,
+  contentHash,
+  ensureMarkdownExtension,
+  toDocumentReference,
 };

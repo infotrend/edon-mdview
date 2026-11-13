@@ -7,6 +7,9 @@ const {
   resolveLocalPath,
   resolveLinkedDocument,
   toResourceUrl,
+  contentHash,
+  ensureMarkdownExtension,
+  toDocumentReference,
 } = require('../../src/main-utils');
 
 const root = path.resolve('C:/temp/MDView test');
@@ -39,4 +42,26 @@ test('apre solo collegamenti Markdown locali nella cartella consentita', () => {
   assert.equal(resolveLinkedDocument(documentPath, 'altro.md#titolo'), path.join(root, 'altro.md'));
   assert.equal(resolveLinkedDocument(documentPath, 'immagine.png'), null);
   assert.equal(resolveLinkedDocument(documentPath, '../altro.md'), null);
+});
+
+test('riconosce le modifiche al contenuto tramite impronta', () => {
+  assert.equal(contentHash('# Titolo\n'), contentHash('# Titolo\n'));
+  assert.notEqual(contentHash('# Titolo\n'), contentHash('# Titolo\r\n'));
+  assert.match(contentHash(''), /^[0-9a-f]{64}$/);
+});
+
+test('il salvataggio con nome mantiene un\'estensione riapribile', () => {
+  assert.equal(ensureMarkdownExtension(path.join(root, 'nota.md')), path.join(root, 'nota.md'));
+  assert.equal(ensureMarkdownExtension(path.join(root, 'nota.MARKDOWN')), path.join(root, 'nota.MARKDOWN'));
+  assert.equal(ensureMarkdownExtension(path.join(root, 'nota')), path.join(root, 'nota.md'));
+  assert.equal(ensureMarkdownExtension(path.join(root, 'nota.docx')), path.join(root, 'nota.docx.md'));
+});
+
+test('le immagini scelte diventano riferimenti relativi solo dentro la cartella del documento', () => {
+  assert.equal(toDocumentReference(documentPath, path.join(root, 'assets', 'mia immagine.png')), 'assets/mia%20immagine.png');
+  assert.equal(toDocumentReference(documentPath, path.join(root, 'logo.svg')), 'logo.svg');
+  assert.equal(toDocumentReference(documentPath, path.join(root, '..', 'fuori.png')), null);
+  assert.equal(toDocumentReference(documentPath, root), null);
+  assert.equal(toDocumentReference(null, path.join(root, 'logo.svg')), null);
+  assert.equal(resolveLocalPath(documentPath, toDocumentReference(documentPath, path.join(root, 'assets', 'mia immagine.png'))), path.join(root, 'assets', 'mia immagine.png'));
 });

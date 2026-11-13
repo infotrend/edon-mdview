@@ -13,11 +13,11 @@ const root = path.resolve(__dirname, '..', '..');
 
 const roundTrip = (source) => {
   const { doc, origin } = bridge.parse(source);
-  return bridge.serialize(doc, origin, { final: true });
+  return bridge.serialize(doc, origin);
 };
 
 /** Serializes every block from scratch, as if the whole document had been rewritten in the editor. */
-const regenerate = (source) => bridge.serialize(bridge.parse(source).doc, bridge.parse('').origin, { final: true });
+const regenerate = (source) => bridge.serialize(bridge.parse(source).doc, bridge.parse('').origin);
 
 /** Applies a ProseMirror transaction to the parsed document and serializes the result. */
 function edit(source, change) {
@@ -25,7 +25,7 @@ function edit(source, change) {
   const state = EditorState.create({ schema, doc });
   const transaction = state.tr;
   change(transaction, doc);
-  return bridge.serialize(transaction.doc, origin, { final: true });
+  return bridge.serialize(transaction.doc, origin);
 }
 
 function blockStart(doc, index) {
@@ -306,4 +306,18 @@ test('ignora i paragrafi vuoti e gestisce il documento svuotato', () => {
   });
   assert.equal(output, '# Titolo\n\nTesto\n');
   assert.equal(edit('# Titolo\n', (transaction) => transaction.delete(0, transaction.doc.content.size)), '');
+});
+
+test('l\'evidenziazione del codice in modifica usa le stesse classi della lettura', () => {
+  const { highlighter, toTree } = require('../../src/renderer/editor/highlight');
+  const tree = highlighter.highlight('js', 'const a = "<b>";');
+  const keyword = tree.children.find((node) => node.type === 'element');
+  assert.deepEqual(keyword.properties.className, ['hljs-keyword']);
+  assert.equal(keyword.children[0].value, 'const');
+  const flatten = (nodes) => nodes.map((node) => (node.type === 'text' ? node.value : flatten(node.children))).join('');
+  assert.equal(flatten(tree.children), 'const a = "<b>";');
+  assert.deepEqual(highlighter.highlightAuto('testo semplice').children, [{ type: 'text', value: 'testo semplice' }]);
+  assert.equal(highlighter.registered('python'), true);
+  assert.equal(highlighter.registered('linguaggio-inesistente'), false);
+  assert.deepEqual(toTree('a &amp; <span class="x y">b</span>').children.map((node) => node.type), ['text', 'element']);
 });

@@ -24,7 +24,14 @@ const plainLowlight = {
   registered: () => false,
 };
 
-const tightAttribute = (parent) => ({ ...parent, tight: { default: true, rendered: false } });
+const tightAttribute = (parent) => ({
+  ...parent,
+  tight: {
+    default: true,
+    parseHTML: (element) => element.getAttribute('data-tight') !== 'false',
+    renderHTML: (attributes) => ({ 'data-tight': attributes.tight ? 'true' : 'false' }),
+  },
+});
 
 const alignAttribute = (parent) => ({
   ...parent,
