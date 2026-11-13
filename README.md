@@ -7,7 +7,7 @@ Visualizzatore ed editor visivo Markdown desktop per Windows 10 e 11 (64 bit), c
 
 ## Perchè
 
-Non trovavamo un md viewer decente ed abbiamo deciso di farlo: lo abbiamo condiviso sperando possa essere utile anche ad altri.
+Non trovavamo un md viewer decente ed abbiamo deciso di farlo (Kimi+Fable): lo abbiamo condiviso sperando possa essere utile anche ad altri.
 
 ## Avvio
 
