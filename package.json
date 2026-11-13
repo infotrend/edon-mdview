@@ -1,0 +1,86 @@
+{
+  "name": "edon-mdview",
+  "productName": "EDON MDView",
+  "version": "1.0.0",
+  "description": "Visualizzatore Markdown sicuro e veloce per Windows, sviluppato da INFOTREND SRL",
+  "private": true,
+  "license": "FSL-1.1-MIT",
+  "main": "src/main.js",
+  "author": {
+    "name": "INFOTREND SRL"
+  },
+  "scripts": {
+    "build": "esbuild src/renderer/app.js --bundle --minify --sourcemap --outfile=dist/renderer.js",
+    "start": "npm run build && electron .",
+    "test": "npm run build && node --test tests/unit/*.test.cjs && node tests/e2e/run.cjs",
+    "test:unit": "node --test tests/unit/*.test.cjs",
+    "test:e2e": "npm run build && node tests/e2e/run.cjs",
+    "dist": "npm run build && electron-builder --win nsis portable --x64"
+  },
+  "dependencies": {
+    "dompurify": "^3.2.6",
+    "highlight.js": "^11.11.1",
+    "markdown-it": "^14.1.0",
+    "markdown-it-anchor": "^9.2.0",
+    "markdown-it-footnote": "^4.0.0",
+    "markdown-it-task-lists": "^2.1.1"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.56.1",
+    "electron": "^45.3.1",
+    "electron-builder": "^26.0.12",
+    "esbuild": "^0.25.11",
+    "jsdom": "^27.2.0"
+  },
+  "build": {
+    "appId": "it.infotrend.edonmdview",
+    "productName": "EDON MDView",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "src/**/*",
+      "build/icon.png",
+      "build/edon-logo.svg",
+      "LICENSE",
+      "package.json"
+    ],
+    "asar": true,
+    "compression": "normal",
+    "win": {
+      "icon": "build/icon.ico",
+      "target": [
+        "nsis",
+        "portable"
+      ],
+      "fileAssociations": [
+        {
+          "ext": [
+            "md",
+            "markdown",
+            "mdown",
+            "mkd"
+          ],
+          "name": "Markdown",
+          "description": "Documento Markdown",
+          "role": "Viewer"
+        }
+      ]
+    },
+    "nsis": {
+      "artifactName": "EDON-MDView-Setup-${version}-${arch}.${ext}",
+      "license": "LICENSE",
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "EDON MDView",
+      "runAfterFinish": true
+    },
+    "portable": {
+      "artifactName": "EDON-MDView-Portable-${version}-${arch}.${ext}"
+    }
+  }
+}

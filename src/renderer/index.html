@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="it" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https: http: mdview:; font-src 'self' data:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EDON MDView</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <svg class="icon-definitions" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <symbol id="edon-mark" viewBox="0 0 256 256"><path d="M38 55h118v31H74v49h82v33H38z"/><path d="M75 112h171v31H75z"/></symbol>
+    <symbol id="i-folder" viewBox="0 0 24 24"><path d="M3 7.5A2.5 2.5 0 0 1 5.5 5h4l2 2h7A2.5 2.5 0 0 1 21 9.5v8a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 17.5z"/></symbol>
+    <symbol id="i-panel" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 4.5 4.5"/></symbol>
+    <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M4.9 4.9l1.4 1.4m11.4 11.4 1.4 1.4m0-14.2-1.4 1.4M6.3 17.7l-1.4 1.4"/></symbol>
+    <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20.5 15.3A8.7 8.7 0 0 1 8.7 3.5 8.8 8.8 0 1 0 20.5 15.3Z"/></symbol>
+    <symbol id="i-export" viewBox="0 0 24 24"><path d="M12 3v12m-4-4 4 4 4-4M5 15v4a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4"/></symbol>
+    <symbol id="i-print" viewBox="0 0 24 24"><path d="M7 8V3h10v5M7 17H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-3"/><path d="M7 14h10v7H7z"/></symbol>
+    <symbol id="i-file" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8m-8 4h6"/></symbol>
+    <symbol id="i-chevron" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol>
+    <symbol id="i-close" viewBox="0 0 24 24"><path d="m6 6 12 12M6 18 18 6"/></symbol>
+    <symbol id="i-up" viewBox="0 0 24 24"><path d="m6 15 6-6 6 6"/></symbol>
+    <symbol id="i-down" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></symbol>
+    <symbol id="i-keyboard" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M6 9h.01M10 9h.01M14 9h.01M18 9h.01M6 12h.01M10 12h.01M14 12h.01M18 12h.01M7 15h10"/></symbol>
+  </svg>
+
+  <div id="app">
+    <header class="topbar">
+      <div class="brand" aria-label="EDON MDView">
+        <span class="brand-mark"><svg aria-hidden="true" class="edon-logo" viewBox="0 0 256 256"><use href="#edon-mark"/></svg></span>
+        <span class="brand-name">EDON MDView</span>
+      </div>
+      <div class="toolbar-group">
+        <button id="open-button" class="button primary" title="Apri un documento (Ctrl+O)">
+          <svg class="icon"><use href="#i-folder"/></svg><span>Apri</span>
+        </button>
+        <button id="sidebar-button" class="icon-button active" title="Mostra/nascondi indice (Ctrl+\)" aria-label="Mostra o nascondi indice" aria-pressed="true">
+          <svg class="icon"><use href="#i-panel"/></svg>
+        </button>
+      </div>
+      <div id="document-heading" class="document-heading">
+        <svg class="icon"><use href="#i-file"/></svg>
+        <span id="document-name">Pronto</span>
+      </div>
+      <div class="toolbar-actions">
+        <button id="search-button" class="icon-button" title="Cerca (Ctrl+F)" aria-label="Cerca nel documento">
+          <svg class="icon"><use href="#i-search"/></svg>
+        </button>
+        <button id="theme-button" class="icon-button" title="Cambia tema (Ctrl+Shift+T)" aria-label="Cambia tema">
+          <svg class="icon theme-sun"><use href="#i-sun"/></svg>
+          <svg class="icon theme-moon"><use href="#i-moon"/></svg>
+        </button>
+        <span class="toolbar-separator"></span>
+        <button id="export-button" class="icon-button" title="Esporta HTML (Ctrl+Shift+E)" aria-label="Esporta come HTML" disabled>
+          <svg class="icon"><use href="#i-export"/></svg>
+        </button>
+        <button id="print-button" class="icon-button" title="Stampa (Ctrl+P)" aria-label="Stampa documento" disabled>
+          <svg class="icon"><use href="#i-print"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <section id="search-panel" class="search-panel" hidden aria-label="Ricerca nel documento">
+      <svg class="icon"><use href="#i-search"/></svg>
+      <input id="search-input" type="search" placeholder="Cerca nel documento…" autocomplete="off" spellcheck="false" aria-label="Testo da cercare">
+      <span id="search-count" class="search-count">0 risultati</span>
+      <button id="search-previous" class="icon-button small" title="Risultato precedente (Maiusc+F3)" aria-label="Risultato precedente"><svg class="icon"><use href="#i-up"/></svg></button>
+      <button id="search-next" class="icon-button small" title="Risultato successivo (F3)" aria-label="Risultato successivo"><svg class="icon"><use href="#i-down"/></svg></button>
+      <button id="search-close" class="icon-button small" title="Chiudi ricerca (Esc)" aria-label="Chiudi ricerca"><svg class="icon"><use href="#i-close"/></svg></button>
+    </section>
+
+    <div class="workspace">
+      <aside id="sidebar" class="sidebar">
+        <div class="sidebar-heading"><span>INDICE</span><span id="heading-count" class="heading-count">0</span></div>
+        <nav id="toc" class="toc" aria-label="Indice del documento">
+          <div class="toc-empty">Apri un documento per visualizzarne la struttura.</div>
+        </nav>
+        <div class="sidebar-footer">
+          <svg class="icon"><use href="#i-check"/></svg>
+          <span>Aggiornamento automatico</span>
+        </div>
+      </aside>
+
+      <main id="viewer" class="viewer" tabindex="-1">
+        <div id="scroll-progress" class="scroll-progress"></div>
+        <article id="content" class="markdown-body welcome">
+          <div class="welcome-hero">
+            <span class="welcome-logo"><svg aria-hidden="true" class="edon-logo" viewBox="0 0 256 256"><use href="#edon-mark"/></svg></span>
+            <p class="eyebrow">IL TUO LETTORE MARKDOWN</p>
+            <h1>Markdown, semplicemente chiaro.</h1>
+            <p class="welcome-lead">Apri un documento e concentrati sui contenuti. Veloce, riservato e completamente offline.</p>
+            <button id="welcome-open" class="button primary large"><svg class="icon"><use href="#i-folder"/></svg>Apri un documento</button>
+            <p class="welcome-hint">oppure trascina qui un file .md</p>
+          </div>
+          <div class="feature-grid">
+            <div><strong>Indice immediato</strong><span>Naviga tra le sezioni con un clic.</span></div>
+            <div><strong>Sempre aggiornato</strong><span>Le modifiche appaiono appena salvi.</span></div>
+            <div><strong>Pronto da condividere</strong><span>Esporta in HTML o stampa in PDF.</span></div>
+          </div>
+          <div class="welcome-shortcuts"><span><kbd>Ctrl</kbd><kbd>O</kbd> Apri</span><span><kbd>Ctrl</kbd><kbd>F</kbd> Cerca</span><span><kbd>Ctrl</kbd><kbd>\</kbd> Indice</span></div>
+        </article>
+      </main>
+    </div>
+
+    <footer class="statusbar">
+      <span class="live-status"><span class="status-dot"></span><span id="status-text">Pronto</span></span>
+      <span id="status-path" class="status-path"></span>
+      <span class="status-spacer"></span>
+      <span id="word-count">0 parole</span>
+      <span class="status-divider"></span>
+      <span id="reading-time">0 min</span>
+      <span class="status-divider"></span>
+      <button id="shortcuts-button" class="status-button" title="Scorciatoie da tastiera"><svg class="icon"><use href="#i-keyboard"/></svg></button>
+      <span id="zoom-level">100%</span>
+    </footer>
+  </div>
+
+  <div id="drag-overlay" class="drag-overlay" hidden><div><svg class="icon"><use href="#i-file"/></svg><strong>Rilascia per aprire</strong><span>Documento Markdown</span></div></div>
+  <div id="toast-region" class="toast-region" aria-live="polite"></div>
+
+  <dialog id="shortcuts-dialog" class="shortcuts-dialog">
+    <div class="dialog-heading"><h2>Scorciatoie da tastiera</h2><button id="shortcuts-close" class="icon-button" aria-label="Chiudi"><svg class="icon"><use href="#i-close"/></svg></button></div>
+    <dl class="shortcut-list">
+      <div><dt>Apri documento</dt><dd><kbd>Ctrl</kbd><kbd>O</kbd></dd></div>
+      <div><dt>Cerca</dt><dd><kbd>Ctrl</kbd><kbd>F</kbd></dd></div>
+      <div><dt>Ricarica</dt><dd><kbd>F5</kbd></dd></div>
+      <div><dt>Mostra/nascondi indice</dt><dd><kbd>Ctrl</kbd><kbd>\</kbd></dd></div>
+      <div><dt>Cambia tema</dt><dd><kbd>Ctrl</kbd><kbd>Maiusc</kbd><kbd>T</kbd></dd></div>
+      <div><dt>Esporta HTML</dt><dd><kbd>Ctrl</kbd><kbd>Maiusc</kbd><kbd>E</kbd></dd></div>
+      <div><dt>Stampa</dt><dd><kbd>Ctrl</kbd><kbd>P</kbd></dd></div>
+      <div><dt>Zoom</dt><dd><kbd>Ctrl</kbd><kbd>+</kbd><span>/</span><kbd>−</kbd></dd></div>
+    </dl>
+  </dialog>
+
+  <script src="../../dist/renderer.js"></script>
+</body>
+</html>
