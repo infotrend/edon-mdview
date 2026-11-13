@@ -95,6 +95,39 @@ async function run() {
   await page.locator('#shortcuts-close').click();
   await expect(page.locator('#shortcuts-dialog')).not.toBeVisible();
 
+  const expectedLogoBounds = [
+    { x: 7, y: 21, width: 150, height: 180 },
+    { x: 74, y: 113, width: 175, height: 27 },
+  ];
+  const logoSvg = fs.readFileSync(path.join(root, 'build', 'edon-logo.svg'), 'utf8');
+  const iconSvg = fs.readFileSync(path.join(root, 'build', 'icon.svg'), 'utf8');
+  const logoGeometry = await page.evaluate(({ standalone, icon }) => {
+    const measure = (markup) => {
+      const documentSvg = new DOMParser().parseFromString(markup, 'image/svg+xml').documentElement;
+      const element = document.importNode(documentSvg, true);
+      element.style.cssText = 'position:absolute;visibility:hidden;width:256px;height:256px';
+      document.body.append(element);
+      const bounds = [...element.querySelectorAll('path')].slice(0, 2).map((pathElement) => {
+        const box = pathElement.getBBox();
+        return { x: box.x, y: box.y, width: box.width, height: box.height };
+      });
+      element.remove();
+      return bounds;
+    };
+    return {
+      interface: [...document.querySelectorAll('#edon-mark path')].map((pathElement) => {
+        const box = pathElement.getBBox();
+        return { x: box.x, y: box.y, width: box.width, height: box.height };
+      }),
+      standalone: measure(standalone),
+      icon: measure(icon),
+    };
+  }, { standalone: logoSvg, icon: iconSvg });
+  assert.deepEqual(logoGeometry.interface, expectedLogoBounds);
+  assert.deepEqual(logoGeometry.standalone, expectedLogoBounds);
+  assert.deepEqual(logoGeometry.icon, expectedLogoBounds);
+  console.log('OK proporzioni originali del logo nella finestra, nel SVG e nell’icona');
+
   assert.deepEqual(pageErrors, [], `Errori nella pagina: ${pageErrors.join('; ')}`);
   console.log('OK nessun errore JavaScript nella finestra');
 }

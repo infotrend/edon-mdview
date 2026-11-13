@@ -35,7 +35,6 @@ test('la finestra usa il logo EDON accessibile e il nuovo nome', () => {
   assert.match(main, /FSL-1\.1-MIT/);
 });
 
-test('le risorse vettoriali conservano il logo e aggiungono il badge MD', () => {
-  assert.match(read('build/edon-logo.svg'), /M38 55h118v31/);
+test('le risorse vettoriali aggiungono il badge MD', () => {
   assert.match(read('build/icon.svg'), />MD<\/text>/);
 });

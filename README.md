@@ -9,7 +9,7 @@ Visualizzatore Markdown desktop per Windows 10 e 11 (64 bit), con interfaccia in
 
 ### Installazione consigliata
 
-1. Scarica e apri [EDON MDView Setup](https://github.com/infotrend/edon-mdview/releases/latest/download/EDON-MDView-Setup-1.0.0-x64.exe).
+1. Scarica e apri [EDON MDView Setup](https://github.com/infotrend/edon-mdview/releases/latest/download/EDON-MDView-Setup-1.0.1-x64.exe).
 2. Leggi e accetta la licenza nel programma di installazione; non sono necessari privilegi di amministratore.
 3. Avvia **EDON MDView** dal menu Start o dal collegamento sul desktop.
 
@@ -17,7 +17,7 @@ L'installazione registra EDON MDView come visualizzatore per `.md`, `.markdown`,
 
 ### Versione portabile
 
-Scarica e apri [EDON MDView Portable](https://github.com/infotrend/edon-mdview/releases/latest/download/EDON-MDView-Portable-1.0.0-x64.exe). Non richiede installazione; può essere copiata ed eseguita da una cartella o un'unità USB.
+Scarica e apri [EDON MDView Portable](https://github.com/infotrend/edon-mdview/releases/latest/download/EDON-MDView-Portable-1.0.1-x64.exe). Non richiede installazione; può essere copiata ed eseguita da una cartella o un'unità USB.
 
 Gli eseguibili includono tutto il necessario: Node.js non deve essere installato. Non essendo firmati con un certificato commerciale, Windows SmartScreen potrebbe chiedere una conferma esplicita.
 
