@@ -5,6 +5,10 @@ Visualizzatore Markdown desktop per Windows 10 e 11 (64 bit), con interfaccia in
 **Sviluppatore:** INFOTREND SRL  
 **Licenza:** [FSL-1.1-MIT](LICENSE)
 
+## Perchè
+
+Non trovavo un md viewer decente ed abbiamo deciso di farlo: lo abbiamo condiviso sperando possa essere utile anche ad altri.
+
 ## Avvio
 
 ### Installazione consigliata
