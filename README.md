@@ -13,7 +13,7 @@ Non trovavamo un md viewer decente ed abbiamo deciso di farlo (Kimi+Fable): lo a
 
 ### Installazione consigliata
 
-1. Scarica e apri [EDON MDView Setup](https://github.com/infotrend/edon-mdview/releases/latest/download/EDON-MDView-Setup-1.1.1-x64.exe).
+1. Scarica e apri [EDON MDView Setup](https://github.com/infotrend/edon-mdview/releases/latest/download/EDON-MDView-Setup-1.2.0-x64.exe).
 2. Leggi e accetta la licenza nel programma di installazione; non sono necessari privilegi di amministratore.
 3. Avvia **EDON MDView** dal menu Start o dal collegamento sul desktop.
 
@@ -21,7 +21,7 @@ L'installazione registra EDON MDView come applicazione per aprire e modificare `
 
 ### Versione portabile
 
-Scarica e apri [EDON MDView Portable](https://github.com/infotrend/edon-mdview/releases/latest/download/EDON-MDView-Portable-1.1.1-x64.exe). Non richiede installazione; può essere copiata ed eseguita da una cartella o un'unità USB.
+Scarica e apri [EDON MDView Portable](https://github.com/infotrend/edon-mdview/releases/latest/download/EDON-MDView-Portable-1.2.0-x64.exe). Non richiede installazione; può essere copiata ed eseguita da una cartella o un'unità USB.
 
 Gli eseguibili includono tutto il necessario: Node.js non deve essere installato. Non essendo firmati con un certificato commerciale, Windows SmartScreen potrebbe chiedere una conferma esplicita.
 

@@ -8,7 +8,7 @@ const net = require('node:net');
 const { spawn, spawnSync } = require('node:child_process');
 const { once } = require('node:events');
 
-const executablePath = path.resolve(process.argv[2] || 'release/EDON-MDView-Portable-1.1.1-x64.exe');
+const executablePath = path.resolve(process.argv[2] || 'release/EDON-MDView-Portable-1.2.0-x64.exe');
 const root = path.resolve(__dirname, '..', '..');
 const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'mdview-portable-test-'));
 const documentPath = path.join(temp, 'documento.md');
