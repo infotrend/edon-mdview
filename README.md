@@ -78,7 +78,7 @@ L'interfaccia è disponibile in italiano e in inglese: menu, barre, finestre di 
 - **Cambio manuale:** **Visualizza → Lingua → Italiano / Inglese** (in inglese **View → Language → Italian / English**). Il cambio è immediato, senza riavvio, e non tocca il documento aperto né le modifiche non salvate.
 - **Scelta ricordata:** la lingua scelta dal menu viene salvata in `%APPDATA%\EDON MDView\settings.json` e usata agli avvii successivi. Finché non si sceglie nulla il file non esiste e la lingua segue quella del sistema; eliminandolo si torna alla scelta automatica.
 
-**Aiuto → Informazioni** mostra versione, licenza, il collegamento a [edon.systems](https://edon.systems) e i ringraziamenti ai principali progetti open source utilizzati, ciascuno con la propria licenza.
+**Aiuto → Informazioni** mostra versione, licenza e i ringraziamenti ai principali progetti open source utilizzati, ciascuno con la propria licenza.
 
 ## Scorciatoie
 
