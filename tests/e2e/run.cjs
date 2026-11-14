@@ -126,15 +126,19 @@ async function typeAtEnd(page, locator, text) {
   await page.keyboard.type(text);
 }
 
-async function run() {
-  const env = { ...process.env, ELECTRON_ENABLE_LOGGING: '1', EDON_MDVIEW_USER_DATA: path.join(temp, 'profilo') };
+/**
+ * Every run has its own profile and a pinned «system» language (`EDON_MDVIEW_LANGUAGE`), so the
+ * Italian texts checked below do not depend on the language of the machine running the tests.
+ */
+function launch({ profile, systemLanguage, args = [] }) {
+  const env = { ...process.env, ELECTRON_ENABLE_LOGGING: '1', EDON_MDVIEW_USER_DATA: profile, EDON_MDVIEW_LANGUAGE: systemLanguage };
   delete env.ELECTRON_RUN_AS_NODE;
-  application = await electron.launch({
-    args: ['.', documentPath],
-    cwd: root,
-    env,
-    timeout: 45000,
-  });
+  return electron.launch({ args: ['.', ...args], cwd: root, env, timeout: 45000 });
+}
+
+async function run() {
+  const profile = path.join(temp, 'profilo');
+  application = await launch({ profile, systemLanguage: 'it', args: [documentPath] });
   const page = await application.firstWindow({ timeout: 30000 });
   page.on('pageerror', (error) => pageErrors.push(error.message));
 
@@ -489,6 +493,8 @@ async function run() {
   await page.locator('#shortcuts-close').click();
   await expect(page.locator('#shortcuts-dialog')).not.toBeVisible();
 
+  await checkLanguageAndAbout(page, profile);
+
   const expectedLogoBounds = [
     { x: 8, y: 53, width: 150, height: 150 },
     { x: 75, y: 113, width: 173, height: 30 },
@@ -524,6 +530,199 @@ async function run() {
 
   assert.deepEqual(pageErrors, [], `Errori nella pagina: ${pageErrors.join('; ')}`);
   console.log('OK nessun errore JavaScript nella finestra');
+
+  await application.close();
+  application = null;
+  await checkStartupLanguage();
+}
+
+const menuState = () => application.evaluate(({ Menu }) => {
+  const menu = Menu.getApplicationMenu();
+  const language = menu.getMenuItemById('language');
+  const view = menu.items[2];
+  return {
+    top: menu.items.map((item) => item.label),
+    languageInView: view.submenu.items.includes(language),
+    language: language.label,
+    languages: language.submenu.items.map((item) => ({ label: item.label, checked: item.checked })),
+    help: menu.items[3].submenu.items.map((item) => item.label),
+  };
+});
+const clickMenu = (id) => application.evaluate(({ Menu }, itemId) => Menu.getApplicationMenu().getMenuItemById(itemId).click(), id);
+const savedSettings = (profile) => JSON.parse(read(path.join(profile, 'settings.json')));
+
+/** Visualizza → Lingua: effetto immediato su menu e finestra, senza perdere le modifiche in corso; poi la finestra Informazioni. */
+async function checkLanguageAndAbout(page, profile) {
+  const { version } = JSON.parse(read(path.join(root, 'package.json')));
+  const { CREDITS } = require(path.join(root, 'src', 'about.js'));
+  const rawLabel = page.locator(`${editor} .raw-block[data-kind="footnote"] .raw-block-label`);
+
+  await openThroughDialog(page, documentPath);
+  await expect(page.locator('#content h1').first()).toHaveText('Guida Markdown');
+  const onDisk = read(documentPath);
+  assert.equal(fs.existsSync(path.join(profile, 'settings.json')), false);
+
+  await expect(page.locator('html')).toHaveAttribute('lang', 'it');
+  await expect(page.locator('#open-button span')).toHaveText('Apri');
+  await expect(page.locator('#edit-button')).toHaveAttribute('title', 'Modifica il documento (Ctrl+E)');
+  await expect(page.locator('#search-button')).toHaveAttribute('aria-label', 'Cerca nel documento');
+  await expect(page.locator('#status-text')).toHaveText('Aggiornamento automatico attivo');
+  await expect(page.locator('#word-count')).toHaveText(/^[\d.]+ parole$/);
+  await expect(page.locator('.sidebar-heading span').first()).toHaveText('INDICE');
+  assert.deepEqual(await menuState(), {
+    top: ['File', 'Modifica', 'Visualizza', 'Aiuto'],
+    languageInView: true,
+    language: 'Lingua',
+    languages: [{ label: 'Italiano', checked: true }, { label: 'Inglese', checked: false }],
+    help: ['Scorciatoie da tastiera', 'Informazioni'],
+  });
+
+  // Modifiche non salvate in corso: il cambio di lingua non deve toccarle.
+  await toggleEditMode(page);
+  await expect(page.locator(editor)).toBeVisible();
+  await typeAtEnd(page, page.locator(`${editor} h1`).first(), ' bozza');
+  await expect(page).toHaveTitle('● documento.md — EDON MDView');
+  await expect(page.locator('#status-text')).toHaveText('Modifiche non salvate');
+  await expect(rawLabel).toHaveText('Nota a piè di pagina · contenuto preservato, non modificabile');
+  await expect(page.locator('[data-command="bold"]')).toHaveAttribute('title', 'Grassetto (Ctrl+B)');
+  await expect(page.locator('[data-command="bold"] b')).toHaveText('G');
+  await expect(page.locator(`${editor} .code-language`).first()).toHaveAttribute('placeholder', 'linguaggio');
+
+  await clickMenu('language-en');
+  await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+  await expect(page.locator('#open-button span')).toHaveText('Open');
+  await expect(page.locator('#edit-button span')).toHaveText('Edit');
+  await expect(page.locator('#edit-button')).toHaveAttribute('title', 'Edit the document (Ctrl+E)');
+  await expect(page.locator('#search-button')).toHaveAttribute('aria-label', 'Find in document');
+  await expect(page.locator('#status-text')).toHaveText('Unsaved changes');
+  await expect(page.locator('#word-count')).toHaveText(/^[\d,]+ words$/);
+  await expect(page.locator('.sidebar-heading span').first()).toHaveText('OUTLINE');
+  await expect(page.locator('[data-command="bold"]')).toHaveAttribute('title', 'Bold (Ctrl+B)');
+  await expect(page.locator('[data-command="bold"] b')).toHaveText('B');
+  await expect(page.locator('#block-type option').nth(2)).toHaveText('Heading 2');
+  await expect(rawLabel).toHaveText('Footnote · preserved content, not editable');
+  await expect(page.locator(`${editor} .code-language`).first()).toHaveAttribute('placeholder', 'language');
+  await expect(page.locator(editor)).toHaveAttribute('aria-label', 'Document content');
+  assert.deepEqual(await menuState(), {
+    top: ['File', 'Edit', 'View', 'Help'],
+    languageInView: true,
+    language: 'Language',
+    languages: [{ label: 'Italian', checked: false }, { label: 'English', checked: true }],
+    help: ['Keyboard Shortcuts', 'About'],
+  });
+  assert.deepEqual(savedSettings(profile), { language: 'en' });
+
+  // Stesso documento, stesse modifiche, stessa cronologia: il testo scritto c'è ancora e si può annullare.
+  await expect(page).toHaveTitle('● documento.md — EDON MDView');
+  await expect(page.locator(`${editor} h1`).first()).toHaveText('Guida Markdown bozza');
+  await expect(page.locator('#toc a').first()).toHaveText('Guida Markdown bozza');
+  await expect(page.locator(`${editor} img[src^="mdview:"]`)).toHaveCount(1);
+  assert.equal(read(documentPath), onDisk);
+  await page.locator('#search-button').click();
+  await page.locator('#search-input').fill('funzion');
+  await expect(page.locator('#search-count')).toHaveText('1 of 5');
+  await page.locator('#search-input').fill('zzz');
+  await expect(page.locator('#search-count')).toHaveText('0 results');
+  await page.keyboard.press('Escape');
+
+  // La richiesta di conferma del sistema segue la lingua scelta.
+  await application.evaluate(({ dialog }) => {
+    dialog.showMessageBox = async (window, options) => { globalThis.__unsavedPrompt = options; return { response: 2 }; };
+  });
+  await toggleEditMode(page);
+  await expect.poll(() => application.evaluate(() => globalThis.__unsavedPrompt && globalThis.__unsavedPrompt.buttons)).toEqual(['Save', 'Don\'t save', 'Cancel']);
+  const prompt = await application.evaluate(() => globalThis.__unsavedPrompt);
+  assert.equal(prompt.title, 'Unsaved changes');
+  assert.equal(prompt.message, 'Do you want to save the changes to “documento.md”?');
+  await expect(page.locator('#edit-toolbar')).toBeVisible();
+
+  await page.locator(`${editor} h1`).first().click();
+  for (let attempt = 0; attempt < 12 && (await page.title()).startsWith('●'); attempt += 1) await page.keyboard.press('Control+z');
+  await expect(page).toHaveTitle('documento.md — EDON MDView');
+  await expect(page.locator(`${editor} h1`).first()).toHaveText('Guida Markdown');
+  await expect(page.locator('#status-text')).toHaveText('Edit mode');
+  await toggleEditMode(page);
+  await expect(page.locator('#edit-toolbar')).toBeHidden();
+  await expect(page.locator('#status-text')).toHaveText('Automatic refresh on');
+  assert.equal(read(documentPath), onDisk);
+  console.log('OK lingua dal menu Visualizza: menu e finestra in inglese subito, modifiche e cronologia intatte, scelta salvata');
+
+  // ---- Finestra Informazioni: INFOTREND SRL, collegamento al sito, ringraziamenti.
+  await application.evaluate(({ shell }) => {
+    globalThis.__opened = [];
+    shell.openExternal = async (url) => { globalThis.__opened.push(url); };
+  });
+  const aboutDialog = page.locator('#about-dialog');
+  const checkAbout = async (texts) => {
+    await clickMenu('about');
+    await expect(aboutDialog).toBeVisible();
+    await expect(aboutDialog.locator('h2')).toHaveText(texts.title);
+    await expect(page.locator('#about-name')).toHaveText('EDON MDView');
+    await expect(page.locator('#about-version')).toHaveText(texts.version);
+    await expect(page.locator('#about-developer')).toHaveText('INFOTREND SRL');
+    await expect(aboutDialog).not.toContainText(/Sviluppato da|Developed by/i);
+    await expect(page.locator('#about-website')).toHaveText('https://edon.systems');
+    await expect(page.locator('#about-website')).toHaveAttribute('href', 'https://edon.systems');
+    await expect(page.locator('#about-license')).toHaveText(texts.license);
+    await expect(aboutDialog).toContainText(texts.credits);
+    await expect(page.locator('#about-credits li')).toHaveText(CREDITS.map((credit) => `${credit.name}${credit.license}`));
+    await expect(page.locator('#about-credits li', { hasText: 'Electron' }).first().locator('.credit-license')).toHaveText('MIT');
+    await expect(page.locator('#about-credits li', { hasText: 'DOMPurify' }).locator('.credit-license')).toHaveText('MPL-2.0 OR Apache-2.0');
+  };
+
+  await checkAbout({ title: 'About', version: `Version ${version}`, license: 'FSL-1.1-MIT license', credits: 'Acknowledgements' });
+  await page.locator('#about-website').click();
+  await expect.poll(() => application.evaluate(() => globalThis.__opened)).toEqual(['https://edon.systems']);
+  // La pagina non può far aprire un indirizzo diverso: la richiesta non porta argomenti.
+  await page.evaluate(() => window.mdview.openWebsite('https://example.com/altro'));
+  assert.deepEqual(await application.evaluate(() => globalThis.__opened), ['https://edon.systems', 'https://edon.systems']);
+  await expect(page).toHaveTitle('documento.md — EDON MDView');
+
+  // Il cambio di lingua aggiorna anche la finestra aperta.
+  await clickMenu('language-it');
+  await expect(aboutDialog.locator('h2')).toHaveText('Informazioni');
+  await expect(page.locator('#about-version')).toHaveText(`Versione ${version}`);
+  await page.locator('#about-close').click();
+  await expect(aboutDialog).not.toBeVisible();
+  await checkAbout({ title: 'Informazioni', version: `Versione ${version}`, license: 'Licenza FSL-1.1-MIT', credits: 'Ringraziamenti' });
+  await page.keyboard.press('Escape');
+  await expect(aboutDialog).not.toBeVisible();
+  await expect(page.locator('html')).toHaveAttribute('lang', 'it');
+  await expect(page.locator('#open-button span')).toHaveText('Apri');
+  await expect(page.locator('#status-text')).toHaveText('Aggiornamento automatico attivo');
+  assert.equal((await menuState()).help[1], 'Informazioni');
+  assert.deepEqual(savedSettings(profile), { language: 'it' });
+  console.log('OK finestra Informazioni nelle due lingue: INFOTREND SRL, collegamento solo a edon.systems, ringraziamenti con licenze');
+}
+
+/** All'avvio: lingua del sistema (italiano → italiano, altro → inglese); la scelta fatta dal menu prevale. */
+async function checkStartupLanguage() {
+  const cases = [
+    { name: 'sistema-inglese', systemLanguage: 'en-US', open: 'Open', lang: 'en', status: 'Ready', menu: 'View', hint: 'or drop an .md file here' },
+    { name: 'sistema-tedesco', systemLanguage: 'de-DE', open: 'Open', lang: 'en', status: 'Ready', menu: 'View', hint: 'or drop an .md file here' },
+    { name: 'sistema-italiano', systemLanguage: 'it-IT', open: 'Apri', lang: 'it', status: 'Pronto', menu: 'Visualizza', hint: 'oppure trascina qui un file .md' },
+    { name: 'scelta-italiano', systemLanguage: 'en-US', saved: 'it', open: 'Apri', lang: 'it', status: 'Pronto', menu: 'Visualizza', hint: 'oppure trascina qui un file .md' },
+    { name: 'scelta-inglese', systemLanguage: 'it-IT', saved: 'en', open: 'Open', lang: 'en', status: 'Ready', menu: 'View', hint: 'or drop an .md file here' },
+  ];
+  for (const expected of cases) {
+    const profile = path.join(temp, expected.name);
+    fs.mkdirSync(profile, { recursive: true });
+    if (expected.saved) fs.writeFileSync(path.join(profile, 'settings.json'), JSON.stringify({ language: expected.saved }), 'utf8');
+    application = await launch({ profile, systemLanguage: expected.systemLanguage });
+    const page = await application.firstWindow({ timeout: 30000 });
+    await expect(page.locator('#open-button span')).toHaveText(expected.open, { timeout: 20000 });
+    await expect(page.locator('html')).toHaveAttribute('lang', expected.lang);
+    await expect(page.locator('#status-text')).toHaveText(expected.status);
+    await expect(page.locator('#document-name')).toHaveText(expected.status);
+    await expect(page.locator('.welcome-hint')).toHaveText(expected.hint);
+    await expect(page).toHaveTitle('EDON MDView');
+    assert.equal((await menuState()).top[2], expected.menu);
+    // Senza una scelta dal menu non viene salvato nulla: la lingua continua a seguire il sistema.
+    assert.equal(fs.existsSync(path.join(profile, 'settings.json')), Boolean(expected.saved));
+    await application.close();
+    application = null;
+  }
+  console.log('OK lingua all\'avvio: italiano sui sistemi in italiano, inglese sugli altri, la scelta manuale prevale');
 }
 
 run()

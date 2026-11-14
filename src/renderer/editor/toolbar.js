@@ -1,4 +1,6 @@
-const SAFE_REFERENCE = /^(?:(?:(?:f|ht)tps?|mailto|tel|callto|sms|cid|xmpp):|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i;
+const { t } = require('../i18n');
+
+const SAFE_REFERENCE =/^(?:(?:(?:f|ht)tps?|mailto|tel|callto|sms|cid|xmpp):|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i;
 
 const COMMANDS = {
   undo: (chain) => chain.undo(),
@@ -35,9 +37,15 @@ function createToolbar({ root, linkDialog, imageDialog, chooseImage, notify }) {
   const linkRemove = linkDialog.querySelector('#link-remove');
   const imageSource = imageDialog.querySelector('#image-src');
   const imageAlt = imageDialog.querySelector('#image-alt');
+  const imageApply = imageDialog.querySelector('#image-apply');
   let editor = null;
   let refreshQueued = false;
   let editingImage = false;
+
+  /** The image dialog confirms with «apply» for an existing image and «insert» for a new one. */
+  function translate() {
+    imageApply.textContent = t(editingImage ? 'dialog.apply' : 'dialog.insert');
+  }
 
   function refresh() {
     refreshQueued = false;
@@ -92,7 +100,7 @@ function createToolbar({ root, linkDialog, imageDialog, chooseImage, notify }) {
   function applyLink() {
     const href = linkUrl.value.trim();
     if (href && !SAFE_REFERENCE.test(href)) {
-      notify('Indirizzo del collegamento non consentito.', 'warning');
+      notify(t('toast.linkAddressNotAllowed'), 'warning');
       return;
     }
     closeDialog(linkDialog);
@@ -116,7 +124,7 @@ function createToolbar({ root, linkDialog, imageDialog, chooseImage, notify }) {
     editingImage = Boolean(selected && selected.type.name === 'image');
     imageSource.value = editingImage ? selected.attrs.src || '' : '';
     imageAlt.value = editingImage ? selected.attrs.alt || '' : '';
-    imageDialog.querySelector('#image-apply').textContent = editingImage ? 'Applica' : 'Inserisci';
+    translate();
     imageDialog.showModal();
     imageSource.focus();
   }
@@ -125,7 +133,7 @@ function createToolbar({ root, linkDialog, imageDialog, chooseImage, notify }) {
     const src = imageSource.value.trim();
     if (!src) { imageSource.focus(); return; }
     if (!SAFE_REFERENCE.test(src)) {
-      notify('Percorso dell\'immagine non consentito.', 'warning');
+      notify(t('toast.imagePathNotAllowed'), 'warning');
       return;
     }
     const attributes = { src, alt: imageAlt.value.trim() || null };
@@ -177,7 +185,7 @@ function createToolbar({ root, linkDialog, imageDialog, chooseImage, notify }) {
   linkDialog.querySelector('#link-apply').addEventListener('click', applyLink);
   linkRemove.addEventListener('click', removeLink);
   linkUrl.addEventListener('keydown', (event) => { if (event.key === 'Enter') { event.preventDefault(); applyLink(); } });
-  imageDialog.querySelector('#image-apply').addEventListener('click', applyImage);
+  imageApply.addEventListener('click', applyImage);
   imageDialog.querySelector('#image-browse').addEventListener('click', browseImage);
   for (const input of [imageSource, imageAlt]) {
     input.addEventListener('keydown', (event) => { if (event.key === 'Enter') { event.preventDefault(); applyImage(); } });
@@ -190,6 +198,7 @@ function createToolbar({ root, linkDialog, imageDialog, chooseImage, notify }) {
       for (const dialog of [linkDialog, imageDialog]) if (dialog.open) dialog.close();
     },
     refresh: queueRefresh,
+    translate,
     run,
     openLink,
   };

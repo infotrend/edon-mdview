@@ -267,6 +267,23 @@ kbd { display: inline-block; min-width: 20px; padding: 1px 5px; margin-right: 3p
 .shortcut-list dt { color: var(--text-soft); }
 .shortcut-list dd { margin: 0; }
 .shortcut-list dd span { color: var(--text-faint); margin: 0 5px; }
+.about-dialog { width: min(460px, 92%); }
+.about-scroll { max-height: min(70vh, 620px); overflow-y: auto; padding-right: 8px; }
+.about-product { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; }
+.about-logo { display: inline-flex; flex: 0 0 auto; }
+.about-logo .edon-logo { width: 56px; height: 56px; }
+.about-name { margin: 0; font-size: 19px; font-weight: 700; }
+.about-version { margin: 2px 0 0; color: var(--text-faint); font-size: 12px; }
+.about-text { margin: 0 0 4px; color: var(--text-soft); font-size: 13px; line-height: 1.55; }
+.about-developer { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; margin: 16px 0 18px; padding: 13px 15px; border: 1px solid var(--border); border-radius: 9px; background: var(--surface-raised); }
+.about-developer strong { font-size: 14px; letter-spacing: .4px; }
+.about-developer a { color: var(--accent); text-decoration: none; }
+.about-developer a:hover { text-decoration: underline; }
+.about-developer span { color: var(--text-faint); font-size: 12px; }
+.about-credits { list-style: none; margin: 10px 0 0; padding: 0; }
+.about-credits li { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; padding: 7px 2px; border-bottom: 1px solid var(--border); font-size: 13px; }
+.about-credits li:last-child { border: 0; }
+.about-credits .credit-license { color: var(--text-faint); font-size: 12px; text-align: right; }
 
 ::-webkit-scrollbar { width: 10px; height: 10px; }
 ::-webkit-scrollbar-track { background: transparent; }

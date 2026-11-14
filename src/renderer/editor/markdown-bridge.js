@@ -1,6 +1,7 @@
 const MarkdownIt = require('markdown-it');
 const footnote = require('markdown-it-footnote');
 const { MarkdownSerializer, MarkdownSerializerState } = require('prosemirror-markdown');
+const { t } = require('../i18n');
 
 const TASK_PREFIX = /^\[([ xX])\](?: |$)/;
 const BULLET_FAMILY = new Set(['bulletList', 'taskList']);
@@ -151,7 +152,7 @@ function createMarkdownBridge(schema) {
   function listItems(inner) {
     const items = [];
     for (let index = 0; index < inner.length; index += 1) {
-      if (inner[index].type !== 'list_item_open') throw new Error('Elenco non valido');
+      if (inner[index].type !== 'list_item_open') throw new Error(t('error.invalidList'));
       const close = closingIndex(inner, index);
       items.push(inner.slice(index + 1, close));
       index = close;

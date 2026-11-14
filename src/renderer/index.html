@@ -51,111 +51,109 @@
   <div id="app">
     <header class="topbar">
       <div class="toolbar-group">
-        <button id="open-button" class="button primary" title="Apri un documento (Ctrl+O)">
-          <svg class="icon"><use href="#i-folder"/></svg><span>Apri</span>
+        <button id="open-button" class="button primary" data-i18n-title="top.open.title">
+          <svg class="icon"><use href="#i-folder"/></svg><span data-i18n="top.open"></span>
         </button>
-        <button id="sidebar-button" class="icon-button active" title="Mostra/nascondi indice (Ctrl+\)" aria-label="Mostra o nascondi indice" aria-pressed="true">
+        <button id="sidebar-button" class="icon-button active" data-i18n-title="top.sidebar.title" data-i18n-label="top.sidebar.label" aria-pressed="true">
           <svg class="icon"><use href="#i-panel"/></svg>
         </button>
       </div>
       <div id="document-heading" class="document-heading">
         <svg class="icon"><use href="#i-file"/></svg>
-        <span id="document-name">Pronto</span>
-        <span id="dirty-indicator" class="dirty-indicator" hidden title="Modifiche non salvate" aria-label="Modifiche non salvate"></span>
+        <span id="document-name"></span>
+        <span id="dirty-indicator" class="dirty-indicator" hidden data-i18n-title="top.dirty" data-i18n-label="top.dirty"></span>
       </div>
       <div class="toolbar-actions">
-        <button id="edit-button" class="button" title="Modifica il documento (Ctrl+E)" aria-pressed="false" disabled>
-          <svg class="icon"><use href="#i-edit"/></svg><span>Modifica</span>
+        <button id="edit-button" class="button" data-i18n-title="top.edit.title" aria-pressed="false" disabled>
+          <svg class="icon"><use href="#i-edit"/></svg><span data-i18n="top.edit"></span>
         </button>
-        <button id="save-button" class="button primary" title="Salva (Ctrl+S)" hidden disabled>
-          <svg class="icon"><use href="#i-save"/></svg><span>Salva</span>
+        <button id="save-button" class="button primary" data-i18n-title="top.save.title" hidden disabled>
+          <svg class="icon"><use href="#i-save"/></svg><span data-i18n="top.save"></span>
         </button>
         <span class="toolbar-separator"></span>
-        <button id="search-button" class="icon-button" title="Cerca (Ctrl+F)" aria-label="Cerca nel documento">
+        <button id="search-button" class="icon-button" data-i18n-title="top.search.title" data-i18n-label="top.search.label">
           <svg class="icon"><use href="#i-search"/></svg>
         </button>
-        <button id="theme-button" class="icon-button" title="Cambia tema (Ctrl+Shift+T)" aria-label="Cambia tema">
+        <button id="theme-button" class="icon-button" data-i18n-title="top.theme.title" data-i18n-label="top.theme.label">
           <svg class="icon theme-sun"><use href="#i-sun"/></svg>
           <svg class="icon theme-moon"><use href="#i-moon"/></svg>
         </button>
         <span class="toolbar-separator"></span>
-        <button id="export-button" class="icon-button" title="Esporta HTML (Ctrl+Shift+E)" aria-label="Esporta come HTML" disabled>
+        <button id="export-button" class="icon-button" data-i18n-title="top.export.title" data-i18n-label="top.export.label" disabled>
           <svg class="icon"><use href="#i-export"/></svg>
         </button>
-        <button id="print-button" class="icon-button" title="Stampa (Ctrl+P)" aria-label="Stampa documento" disabled>
+        <button id="print-button" class="icon-button" data-i18n-title="top.print.title" data-i18n-label="top.print.label" disabled>
           <svg class="icon"><use href="#i-print"/></svg>
         </button>
       </div>
     </header>
 
-    <section id="search-panel" class="search-panel" hidden aria-label="Ricerca nel documento">
+    <section id="search-panel" class="search-panel" hidden data-i18n-label="search.panel">
       <svg class="icon"><use href="#i-search"/></svg>
-      <input id="search-input" type="search" placeholder="Cerca nel documento…" autocomplete="off" spellcheck="false" aria-label="Testo da cercare">
-      <span id="search-count" class="search-count">0 risultati</span>
-      <button id="search-previous" class="icon-button small" title="Risultato precedente (Maiusc+F3)" aria-label="Risultato precedente"><svg class="icon"><use href="#i-up"/></svg></button>
-      <button id="search-next" class="icon-button small" title="Risultato successivo (F3)" aria-label="Risultato successivo"><svg class="icon"><use href="#i-down"/></svg></button>
-      <button id="search-close" class="icon-button small" title="Chiudi ricerca (Esc)" aria-label="Chiudi ricerca"><svg class="icon"><use href="#i-close"/></svg></button>
+      <input id="search-input" type="search" data-i18n-placeholder="search.placeholder" autocomplete="off" spellcheck="false" data-i18n-label="search.input">
+      <span id="search-count" class="search-count"></span>
+      <button id="search-previous" class="icon-button small" data-i18n-title="search.previous.title" data-i18n-label="search.previous"><svg class="icon"><use href="#i-up"/></svg></button>
+      <button id="search-next" class="icon-button small" data-i18n-title="search.next.title" data-i18n-label="search.next"><svg class="icon"><use href="#i-down"/></svg></button>
+      <button id="search-close" class="icon-button small" data-i18n-title="search.close.title" data-i18n-label="search.close"><svg class="icon"><use href="#i-close"/></svg></button>
     </section>
 
-    <section id="edit-toolbar" class="edit-toolbar" hidden role="toolbar" aria-label="Strumenti di modifica">
-      <button class="tool-button" data-command="undo" title="Annulla (Ctrl+Z)" aria-label="Annulla"><svg class="icon"><use href="#i-undo"/></svg></button>
-      <button class="tool-button" data-command="redo" title="Ripeti (Ctrl+Y)" aria-label="Ripeti"><svg class="icon"><use href="#i-redo"/></svg></button>
+    <section id="edit-toolbar" class="edit-toolbar" hidden role="toolbar" data-i18n-label="toolbar.label">
+      <button class="tool-button" data-command="undo" data-i18n-title="toolbar.undo.title" data-i18n-label="toolbar.undo"><svg class="icon"><use href="#i-undo"/></svg></button>
+      <button class="tool-button" data-command="redo" data-i18n-title="toolbar.redo.title" data-i18n-label="toolbar.redo"><svg class="icon"><use href="#i-redo"/></svg></button>
       <span class="toolbar-separator"></span>
-      <select id="block-type" class="tool-select" title="Stile del paragrafo (Ctrl+Alt+1…6)" aria-label="Stile del paragrafo">
-        <option value="paragraph">Paragrafo</option>
-        <option value="1">Titolo 1</option>
-        <option value="2">Titolo 2</option>
-        <option value="3">Titolo 3</option>
-        <option value="4">Titolo 4</option>
-        <option value="5">Titolo 5</option>
-        <option value="6">Titolo 6</option>
+      <select id="block-type" class="tool-select" data-i18n-title="toolbar.blockType.title" data-i18n-label="toolbar.blockType">
+        <option value="paragraph" data-i18n="toolbar.paragraph"></option>
+        <option value="1" data-i18n="toolbar.heading" data-i18n-params='{"level":1}'></option>
+        <option value="2" data-i18n="toolbar.heading" data-i18n-params='{"level":2}'></option>
+        <option value="3" data-i18n="toolbar.heading" data-i18n-params='{"level":3}'></option>
+        <option value="4" data-i18n="toolbar.heading" data-i18n-params='{"level":4}'></option>
+        <option value="5" data-i18n="toolbar.heading" data-i18n-params='{"level":5}'></option>
+        <option value="6" data-i18n="toolbar.heading" data-i18n-params='{"level":6}'></option>
       </select>
       <span class="toolbar-separator"></span>
-      <button class="tool-button glyph" data-command="bold" data-active="bold" title="Grassetto (Ctrl+B)" aria-label="Grassetto" aria-pressed="false"><b>G</b></button>
-      <button class="tool-button glyph" data-command="italic" data-active="italic" title="Corsivo (Ctrl+I)" aria-label="Corsivo" aria-pressed="false"><i>C</i></button>
-      <button class="tool-button glyph" data-command="strike" data-active="strike" title="Barrato (Ctrl+Maiusc+X)" aria-label="Barrato" aria-pressed="false"><s>S</s></button>
-      <button class="tool-button" data-command="code" data-active="code" title="Codice in linea (Ctrl+Maiusc+C)" aria-label="Codice in linea" aria-pressed="false"><svg class="icon"><use href="#i-code"/></svg></button>
+      <button class="tool-button glyph" data-command="bold" data-active="bold" data-i18n-title="toolbar.bold.title" data-i18n-label="toolbar.bold" aria-pressed="false"><b data-i18n="toolbar.bold.glyph"></b></button>
+      <button class="tool-button glyph" data-command="italic" data-active="italic" data-i18n-title="toolbar.italic.title" data-i18n-label="toolbar.italic" aria-pressed="false"><i data-i18n="toolbar.italic.glyph"></i></button>
+      <button class="tool-button glyph" data-command="strike" data-active="strike" data-i18n-title="toolbar.strike.title" data-i18n-label="toolbar.strike" aria-pressed="false"><s data-i18n="toolbar.strike.glyph"></s></button>
+      <button class="tool-button" data-command="code" data-active="code" data-i18n-title="toolbar.code.title" data-i18n-label="toolbar.code" aria-pressed="false"><svg class="icon"><use href="#i-code"/></svg></button>
       <span class="toolbar-separator"></span>
-      <button class="tool-button" data-command="bulletList" data-active="bulletList" title="Elenco puntato (Ctrl+Maiusc+8)" aria-label="Elenco puntato" aria-pressed="false"><svg class="icon"><use href="#i-list"/></svg></button>
-      <button class="tool-button" data-command="orderedList" data-active="orderedList" title="Elenco numerato (Ctrl+Maiusc+7)" aria-label="Elenco numerato" aria-pressed="false"><svg class="icon"><use href="#i-list-ordered"/></svg></button>
-      <button class="tool-button" data-command="taskList" data-active="taskList" title="Elenco di attività (Ctrl+Maiusc+9)" aria-label="Elenco di attività" aria-pressed="false"><svg class="icon"><use href="#i-list-task"/></svg></button>
+      <button class="tool-button" data-command="bulletList" data-active="bulletList" data-i18n-title="toolbar.bulletList.title" data-i18n-label="toolbar.bulletList" aria-pressed="false"><svg class="icon"><use href="#i-list"/></svg></button>
+      <button class="tool-button" data-command="orderedList" data-active="orderedList" data-i18n-title="toolbar.orderedList.title" data-i18n-label="toolbar.orderedList" aria-pressed="false"><svg class="icon"><use href="#i-list-ordered"/></svg></button>
+      <button class="tool-button" data-command="taskList" data-active="taskList" data-i18n-title="toolbar.taskList.title" data-i18n-label="toolbar.taskList" aria-pressed="false"><svg class="icon"><use href="#i-list-task"/></svg></button>
       <span class="toolbar-separator"></span>
-      <button class="tool-button" data-command="blockquote" data-active="blockquote" title="Citazione (Ctrl+Maiusc+B)" aria-label="Citazione" aria-pressed="false"><svg class="icon"><use href="#i-quote"/></svg></button>
-      <button class="tool-button" data-command="codeBlock" data-active="codeBlock" title="Blocco di codice (Ctrl+Alt+C)" aria-label="Blocco di codice" aria-pressed="false"><svg class="icon"><use href="#i-code-block"/></svg></button>
-      <button class="tool-button" data-command="horizontalRule" title="Linea orizzontale" aria-label="Linea orizzontale"><svg class="icon"><use href="#i-rule"/></svg></button>
+      <button class="tool-button" data-command="blockquote" data-active="blockquote" data-i18n-title="toolbar.blockquote.title" data-i18n-label="toolbar.blockquote" aria-pressed="false"><svg class="icon"><use href="#i-quote"/></svg></button>
+      <button class="tool-button" data-command="codeBlock" data-active="codeBlock" data-i18n-title="toolbar.codeBlock.title" data-i18n-label="toolbar.codeBlock" aria-pressed="false"><svg class="icon"><use href="#i-code-block"/></svg></button>
+      <button class="tool-button" data-command="horizontalRule" data-i18n-title="toolbar.rule" data-i18n-label="toolbar.rule"><svg class="icon"><use href="#i-rule"/></svg></button>
       <span class="toolbar-separator"></span>
-      <button class="tool-button" data-command="link" data-active="link" title="Collegamento (Ctrl+K)" aria-label="Collegamento" aria-pressed="false"><svg class="icon"><use href="#i-link"/></svg></button>
-      <button class="tool-button" data-command="image" title="Immagine" aria-label="Immagine"><svg class="icon"><use href="#i-image"/></svg></button>
-      <button class="tool-button" data-command="table" title="Inserisci tabella" aria-label="Inserisci tabella"><svg class="icon"><use href="#i-table"/></svg></button>
-      <span id="table-tools" class="tool-group" hidden role="group" aria-label="Strumenti tabella">
+      <button class="tool-button" data-command="link" data-active="link" data-i18n-title="toolbar.link.title" data-i18n-label="toolbar.link" aria-pressed="false"><svg class="icon"><use href="#i-link"/></svg></button>
+      <button class="tool-button" data-command="image" data-i18n-title="toolbar.image" data-i18n-label="toolbar.image"><svg class="icon"><use href="#i-image"/></svg></button>
+      <button class="tool-button" data-command="table" data-i18n-title="toolbar.table" data-i18n-label="toolbar.table"><svg class="icon"><use href="#i-table"/></svg></button>
+      <span id="table-tools" class="tool-group" hidden role="group" data-i18n-label="toolbar.tableTools">
         <span class="toolbar-separator"></span>
-        <button class="tool-button" data-command="rowBefore" title="Aggiungi riga sopra" aria-label="Aggiungi riga sopra"><svg class="icon"><use href="#i-row-above"/></svg></button>
-        <button class="tool-button" data-command="rowAfter" title="Aggiungi riga sotto" aria-label="Aggiungi riga sotto"><svg class="icon"><use href="#i-row-below"/></svg></button>
-        <button class="tool-button" data-command="rowDelete" title="Elimina riga" aria-label="Elimina riga"><svg class="icon"><use href="#i-row-delete"/></svg></button>
-        <button class="tool-button" data-command="columnBefore" title="Aggiungi colonna a sinistra" aria-label="Aggiungi colonna a sinistra"><svg class="icon"><use href="#i-column-left"/></svg></button>
-        <button class="tool-button" data-command="columnAfter" title="Aggiungi colonna a destra" aria-label="Aggiungi colonna a destra"><svg class="icon"><use href="#i-column-right"/></svg></button>
-        <button class="tool-button" data-command="columnDelete" title="Elimina colonna" aria-label="Elimina colonna"><svg class="icon"><use href="#i-column-delete"/></svg></button>
-        <button class="tool-button danger" data-command="tableDelete" title="Elimina tabella" aria-label="Elimina tabella"><svg class="icon"><use href="#i-trash"/></svg></button>
+        <button class="tool-button" data-command="rowBefore" data-i18n-title="toolbar.rowBefore" data-i18n-label="toolbar.rowBefore"><svg class="icon"><use href="#i-row-above"/></svg></button>
+        <button class="tool-button" data-command="rowAfter" data-i18n-title="toolbar.rowAfter" data-i18n-label="toolbar.rowAfter"><svg class="icon"><use href="#i-row-below"/></svg></button>
+        <button class="tool-button" data-command="rowDelete" data-i18n-title="toolbar.rowDelete" data-i18n-label="toolbar.rowDelete"><svg class="icon"><use href="#i-row-delete"/></svg></button>
+        <button class="tool-button" data-command="columnBefore" data-i18n-title="toolbar.columnBefore" data-i18n-label="toolbar.columnBefore"><svg class="icon"><use href="#i-column-left"/></svg></button>
+        <button class="tool-button" data-command="columnAfter" data-i18n-title="toolbar.columnAfter" data-i18n-label="toolbar.columnAfter"><svg class="icon"><use href="#i-column-right"/></svg></button>
+        <button class="tool-button" data-command="columnDelete" data-i18n-title="toolbar.columnDelete" data-i18n-label="toolbar.columnDelete"><svg class="icon"><use href="#i-column-delete"/></svg></button>
+        <button class="tool-button danger" data-command="tableDelete" data-i18n-title="toolbar.tableDelete" data-i18n-label="toolbar.tableDelete"><svg class="icon"><use href="#i-trash"/></svg></button>
       </span>
       <span class="status-spacer"></span>
-      <button id="save-as-button" class="tool-button" title="Salva con nome… (Ctrl+Maiusc+S)" aria-label="Salva con nome"><svg class="icon"><use href="#i-save-as"/></svg></button>
+      <button id="save-as-button" class="tool-button" data-i18n-title="toolbar.saveAs.title" data-i18n-label="toolbar.saveAs"><svg class="icon"><use href="#i-save-as"/></svg></button>
     </section>
 
     <section id="conflict-banner" class="conflict-banner" hidden role="alert">
-      <span class="conflict-text"><strong>Il file è stato modificato su disco.</strong> Hai modifiche non salvate: scegli quale versione tenere.</span>
-      <button id="conflict-reload" class="button">Ricarica dal disco</button>
-      <button id="conflict-keep" class="button primary">Mantieni le mie modifiche</button>
+      <span class="conflict-text"><strong data-i18n="conflict.title"></strong> <span data-i18n="conflict.detail"></span></span>
+      <button id="conflict-reload" class="button" data-i18n="conflict.reload"></button>
+      <button id="conflict-keep" class="button primary" data-i18n="conflict.keep"></button>
     </section>
 
     <div class="workspace">
       <aside id="sidebar" class="sidebar">
-        <div class="sidebar-heading"><span>INDICE</span><span id="heading-count" class="heading-count">0</span></div>
-        <nav id="toc" class="toc" aria-label="Indice del documento">
-          <div class="toc-empty">Apri un documento per visualizzarne la struttura.</div>
-        </nav>
+        <div class="sidebar-heading"><span data-i18n="sidebar.heading"></span><span id="heading-count" class="heading-count">0</span></div>
+        <nav id="toc" class="toc" data-i18n-label="toc.label"></nav>
         <div class="sidebar-footer">
           <svg class="icon"><use href="#i-check"/></svg>
-          <span>Aggiornamento automatico</span>
+          <span data-i18n="sidebar.autoRefresh"></span>
         </div>
       </aside>
 
@@ -164,98 +162,121 @@
         <article id="content" class="markdown-body welcome">
           <div class="welcome-hero">
             <span class="welcome-logo"><svg aria-hidden="true" class="edon-logo" viewBox="0 0 256 256"><use href="#edon-mark"/></svg></span>
-            <p class="eyebrow">LEGGI E MODIFICA MARKDOWN</p>
-            <h1>Markdown, semplicemente chiaro.</h1>
-            <p class="welcome-lead">Apri un documento, leggilo e modificalo senza scrivere un solo simbolo. Veloce, riservato e completamente offline.</p>
-            <button id="welcome-open" class="button primary large"><svg class="icon"><use href="#i-folder"/></svg>Apri un documento</button>
-            <p class="welcome-hint">oppure trascina qui un file .md</p>
+            <p class="eyebrow" data-i18n="welcome.eyebrow"></p>
+            <h1 data-i18n="welcome.title"></h1>
+            <p class="welcome-lead" data-i18n="welcome.lead"></p>
+            <button id="welcome-open" class="button primary large"><svg class="icon"><use href="#i-folder"/></svg><span data-i18n="welcome.open"></span></button>
+            <p class="welcome-hint" data-i18n="welcome.hint"></p>
           </div>
           <div class="feature-grid">
-            <div><strong>Indice immediato</strong><span>Naviga tra le sezioni con un clic.</span></div>
-            <div><strong>Editor visivo</strong><span>Formatta con i pulsanti e salva in Markdown.</span></div>
-            <div><strong>Pronto da condividere</strong><span>Esporta in HTML o stampa in PDF.</span></div>
+            <div><strong data-i18n="welcome.feature.outline.title"></strong><span data-i18n="welcome.feature.outline.text"></span></div>
+            <div><strong data-i18n="welcome.feature.editor.title"></strong><span data-i18n="welcome.feature.editor.text"></span></div>
+            <div><strong data-i18n="welcome.feature.share.title"></strong><span data-i18n="welcome.feature.share.text"></span></div>
           </div>
-          <div class="welcome-shortcuts"><span><kbd>Ctrl</kbd><kbd>O</kbd> Apri</span><span><kbd>Ctrl</kbd><kbd>E</kbd> Modifica</span><span><kbd>Ctrl</kbd><kbd>F</kbd> Cerca</span><span><kbd>Ctrl</kbd><kbd>\</kbd> Indice</span></div>
+          <div class="welcome-shortcuts"><span><kbd>Ctrl</kbd><kbd>O</kbd> <span data-i18n="welcome.shortcut.open"></span></span><span><kbd>Ctrl</kbd><kbd>E</kbd> <span data-i18n="welcome.shortcut.edit"></span></span><span><kbd>Ctrl</kbd><kbd>F</kbd> <span data-i18n="welcome.shortcut.search"></span></span><span><kbd>Ctrl</kbd><kbd>\</kbd> <span data-i18n="welcome.shortcut.outline"></span></span></div>
         </article>
         <div id="editor" class="editor-host" hidden></div>
       </main>
     </div>
 
     <footer class="statusbar">
-      <span class="live-status"><span class="status-dot"></span><span id="status-text">Pronto</span></span>
+      <span class="live-status"><span class="status-dot"></span><span id="status-text"></span></span>
       <span id="status-path" class="status-path"></span>
       <span class="status-spacer"></span>
-      <span id="word-count">0 parole</span>
+      <span id="word-count"></span>
       <span class="status-divider"></span>
-      <span id="reading-time">0 min</span>
+      <span id="reading-time"></span>
       <span class="status-divider"></span>
-      <button id="shortcuts-button" class="status-button" title="Scorciatoie da tastiera"><svg class="icon"><use href="#i-keyboard"/></svg></button>
+      <button id="shortcuts-button" class="status-button" data-i18n-title="status.shortcuts" data-i18n-label="status.shortcuts"><svg class="icon"><use href="#i-keyboard"/></svg></button>
       <span id="zoom-level">100%</span>
     </footer>
   </div>
 
-  <div id="drag-overlay" class="drag-overlay" hidden><div><svg class="icon"><use href="#i-file"/></svg><strong>Rilascia per aprire</strong><span>Documento Markdown</span></div></div>
+  <div id="drag-overlay" class="drag-overlay" hidden><div><svg class="icon"><use href="#i-file"/></svg><strong data-i18n="drag.title"></strong><span data-i18n="drag.subtitle"></span></div></div>
   <div id="toast-region" class="toast-region" aria-live="polite"></div>
 
   <dialog id="shortcuts-dialog" class="shortcuts-dialog">
-    <div class="dialog-heading"><h2>Scorciatoie da tastiera</h2><button id="shortcuts-close" class="icon-button" aria-label="Chiudi"><svg class="icon"><use href="#i-close"/></svg></button></div>
+    <div class="dialog-heading"><h2 data-i18n="shortcuts.title"></h2><button id="shortcuts-close" class="icon-button" data-i18n-label="dialog.close"><svg class="icon"><use href="#i-close"/></svg></button></div>
     <div class="shortcut-scroll">
-      <h3 class="shortcut-section">Documento</h3>
+      <h3 class="shortcut-section" data-i18n="shortcuts.section.document"></h3>
       <dl class="shortcut-list">
-        <div><dt>Apri documento</dt><dd><kbd>Ctrl</kbd><kbd>O</kbd></dd></div>
-        <div><dt>Modifica documento</dt><dd><kbd>Ctrl</kbd><kbd>E</kbd></dd></div>
-        <div><dt>Salva</dt><dd><kbd>Ctrl</kbd><kbd>S</kbd></dd></div>
-        <div><dt>Salva con nome</dt><dd><kbd>Ctrl</kbd><kbd>Maiusc</kbd><kbd>S</kbd></dd></div>
-        <div><dt>Cerca</dt><dd><kbd>Ctrl</kbd><kbd>F</kbd></dd></div>
-        <div><dt>Ricarica</dt><dd><kbd>F5</kbd></dd></div>
-        <div><dt>Mostra/nascondi indice</dt><dd><kbd>Ctrl</kbd><kbd>\</kbd></dd></div>
-        <div><dt>Cambia tema</dt><dd><kbd>Ctrl</kbd><kbd>Maiusc</kbd><kbd>T</kbd></dd></div>
-        <div><dt>Esporta HTML</dt><dd><kbd>Ctrl</kbd><kbd>Maiusc</kbd><kbd>E</kbd></dd></div>
-        <div><dt>Stampa</dt><dd><kbd>Ctrl</kbd><kbd>P</kbd></dd></div>
-        <div><dt>Zoom</dt><dd><kbd>Ctrl</kbd><kbd>+</kbd><span>/</span><kbd>−</kbd></dd></div>
+        <div><dt data-i18n="shortcuts.open"></dt><dd><kbd>Ctrl</kbd><kbd>O</kbd></dd></div>
+        <div><dt data-i18n="shortcuts.edit"></dt><dd><kbd>Ctrl</kbd><kbd>E</kbd></dd></div>
+        <div><dt data-i18n="shortcuts.save"></dt><dd><kbd>Ctrl</kbd><kbd>S</kbd></dd></div>
+        <div><dt data-i18n="shortcuts.saveAs"></dt><dd><kbd>Ctrl</kbd><kbd data-i18n="key.shift"></kbd><kbd>S</kbd></dd></div>
+        <div><dt data-i18n="shortcuts.search"></dt><dd><kbd>Ctrl</kbd><kbd>F</kbd></dd></div>
+        <div><dt data-i18n="shortcuts.reload"></dt><dd><kbd>F5</kbd></dd></div>
+        <div><dt data-i18n="shortcuts.sidebar"></dt><dd><kbd>Ctrl</kbd><kbd>\</kbd></dd></div>
+        <div><dt data-i18n="shortcuts.theme"></dt><dd><kbd>Ctrl</kbd><kbd data-i18n="key.shift"></kbd><kbd>T</kbd></dd></div>
+        <div><dt data-i18n="shortcuts.export"></dt><dd><kbd>Ctrl</kbd><kbd data-i18n="key.shift"></kbd><kbd>E</kbd></dd></div>
+        <div><dt data-i18n="shortcuts.print"></dt><dd><kbd>Ctrl</kbd><kbd>P</kbd></dd></div>
+        <div><dt data-i18n="shortcuts.zoom"></dt><dd><kbd>Ctrl</kbd><kbd>+</kbd><span>/</span><kbd>−</kbd></dd></div>
       </dl>
-      <h3 class="shortcut-section">Modifica</h3>
+      <h3 class="shortcut-section" data-i18n="shortcuts.section.editing"></h3>
       <dl class="shortcut-list">
-        <div><dt>Annulla / Ripeti</dt><dd><kbd>Ctrl</kbd><kbd>Z</kbd><span>/</span><kbd>Ctrl</kbd><kbd>Y</kbd></dd></div>
-        <div><dt>Grassetto</dt><dd><kbd>Ctrl</kbd><kbd>B</kbd></dd></div>
-        <div><dt>Corsivo</dt><dd><kbd>Ctrl</kbd><kbd>I</kbd></dd></div>
-        <div><dt>Barrato</dt><dd><kbd>Ctrl</kbd><kbd>Maiusc</kbd><kbd>X</kbd></dd></div>
-        <div><dt>Codice in linea</dt><dd><kbd>Ctrl</kbd><kbd>Maiusc</kbd><kbd>C</kbd></dd></div>
-        <div><dt>Collegamento</dt><dd><kbd>Ctrl</kbd><kbd>K</kbd></dd></div>
-        <div><dt>Titolo 1…6</dt><dd><kbd>Ctrl</kbd><kbd>Alt</kbd><kbd>1</kbd><span>…</span><kbd>6</kbd></dd></div>
-        <div><dt>Paragrafo</dt><dd><kbd>Ctrl</kbd><kbd>Alt</kbd><kbd>0</kbd></dd></div>
-        <div><dt>Elenco puntato</dt><dd><kbd>Ctrl</kbd><kbd>Maiusc</kbd><kbd>8</kbd></dd></div>
-        <div><dt>Elenco numerato</dt><dd><kbd>Ctrl</kbd><kbd>Maiusc</kbd><kbd>7</kbd></dd></div>
-        <div><dt>Elenco di attività</dt><dd><kbd>Ctrl</kbd><kbd>Maiusc</kbd><kbd>9</kbd></dd></div>
-        <div><dt>Citazione</dt><dd><kbd>Ctrl</kbd><kbd>Maiusc</kbd><kbd>B</kbd></dd></div>
-        <div><dt>Blocco di codice</dt><dd><kbd>Ctrl</kbd><kbd>Alt</kbd><kbd>C</kbd></dd></div>
-        <div><dt>Rientra / riduci voce di elenco</dt><dd><kbd>Tab</kbd><span>/</span><kbd>Maiusc</kbd><kbd>Tab</kbd></dd></div>
-        <div><dt>A capo nella stessa riga</dt><dd><kbd>Maiusc</kbd><kbd>Invio</kbd></dd></div>
+        <div><dt data-i18n="shortcuts.undoRedo"></dt><dd><kbd>Ctrl</kbd><kbd>Z</kbd><span>/</span><kbd>Ctrl</kbd><kbd>Y</kbd></dd></div>
+        <div><dt data-i18n="shortcuts.bold"></dt><dd><kbd>Ctrl</kbd><kbd>B</kbd></dd></div>
+        <div><dt data-i18n="shortcuts.italic"></dt><dd><kbd>Ctrl</kbd><kbd>I</kbd></dd></div>
+        <div><dt data-i18n="shortcuts.strike"></dt><dd><kbd>Ctrl</kbd><kbd data-i18n="key.shift"></kbd><kbd>X</kbd></dd></div>
+        <div><dt data-i18n="shortcuts.code"></dt><dd><kbd>Ctrl</kbd><kbd data-i18n="key.shift"></kbd><kbd>C</kbd></dd></div>
+        <div><dt data-i18n="shortcuts.link"></dt><dd><kbd>Ctrl</kbd><kbd>K</kbd></dd></div>
+        <div><dt data-i18n="shortcuts.headings"></dt><dd><kbd>Ctrl</kbd><kbd>Alt</kbd><kbd>1</kbd><span>…</span><kbd>6</kbd></dd></div>
+        <div><dt data-i18n="shortcuts.paragraph"></dt><dd><kbd>Ctrl</kbd><kbd>Alt</kbd><kbd>0</kbd></dd></div>
+        <div><dt data-i18n="shortcuts.bulletList"></dt><dd><kbd>Ctrl</kbd><kbd data-i18n="key.shift"></kbd><kbd>8</kbd></dd></div>
+        <div><dt data-i18n="shortcuts.orderedList"></dt><dd><kbd>Ctrl</kbd><kbd data-i18n="key.shift"></kbd><kbd>7</kbd></dd></div>
+        <div><dt data-i18n="shortcuts.taskList"></dt><dd><kbd>Ctrl</kbd><kbd data-i18n="key.shift"></kbd><kbd>9</kbd></dd></div>
+        <div><dt data-i18n="shortcuts.blockquote"></dt><dd><kbd>Ctrl</kbd><kbd data-i18n="key.shift"></kbd><kbd>B</kbd></dd></div>
+        <div><dt data-i18n="shortcuts.codeBlock"></dt><dd><kbd>Ctrl</kbd><kbd>Alt</kbd><kbd>C</kbd></dd></div>
+        <div><dt data-i18n="shortcuts.indent"></dt><dd><kbd>Tab</kbd><span>/</span><kbd data-i18n="key.shift"></kbd><kbd>Tab</kbd></dd></div>
+        <div><dt data-i18n="shortcuts.lineBreak"></dt><dd><kbd data-i18n="key.shift"></kbd><kbd data-i18n="key.enter"></kbd></dd></div>
       </dl>
+    </div>
+  </dialog>
+
+  <dialog id="about-dialog" class="shortcuts-dialog about-dialog" aria-labelledby="about-dialog-title">
+    <div class="dialog-heading"><h2 id="about-dialog-title" data-i18n="about.title"></h2><button id="about-close" class="icon-button" data-i18n-label="dialog.close"><svg class="icon"><use href="#i-close"/></svg></button></div>
+    <div class="about-scroll">
+      <div class="about-product">
+        <span class="about-logo"><svg aria-hidden="true" class="edon-logo" viewBox="0 0 256 256"><use href="#edon-mark"/></svg></span>
+        <div>
+          <p id="about-name" class="about-name"></p>
+          <p id="about-version" class="about-version"></p>
+        </div>
+      </div>
+      <p class="about-text" data-i18n="about.tagline"></p>
+      <p class="about-text" data-i18n="about.privacy"></p>
+      <div class="about-developer">
+        <strong id="about-developer"></strong>
+        <a id="about-website" data-i18n-title="about.website.title"></a>
+        <span id="about-license"></span>
+      </div>
+      <h3 class="shortcut-section" data-i18n="about.credits.title"></h3>
+      <p class="about-text" data-i18n="about.credits.intro"></p>
+      <ul id="about-credits" class="about-credits" data-i18n-label="about.credits.label"></ul>
     </div>
   </dialog>
 
   <dialog id="link-dialog" class="shortcuts-dialog form-dialog" aria-labelledby="link-dialog-title">
-    <div class="dialog-heading"><h2 id="link-dialog-title">Collegamento</h2><button class="icon-button" data-dialog-close aria-label="Chiudi"><svg class="icon"><use href="#i-close"/></svg></button></div>
-    <label class="field"><span>Indirizzo o percorso</span><input id="link-url" type="text" placeholder="https://esempio.it oppure documento.md" autocomplete="off" spellcheck="false"></label>
+    <div class="dialog-heading"><h2 id="link-dialog-title" data-i18n="link.title"></h2><button class="icon-button" data-dialog-close data-i18n-label="dialog.close"><svg class="icon"><use href="#i-close"/></svg></button></div>
+    <label class="field"><span data-i18n="link.field"></span><input id="link-url" type="text" data-i18n-placeholder="link.placeholder" autocomplete="off" spellcheck="false"></label>
     <div class="dialog-actions">
-      <button id="link-remove" class="button">Rimuovi collegamento</button>
+      <button id="link-remove" class="button" data-i18n="link.remove"></button>
       <span class="status-spacer"></span>
-      <button class="button" data-dialog-close>Annulla</button>
-      <button id="link-apply" class="button primary">Applica</button>
+      <button class="button" data-dialog-close data-i18n="dialog.cancel"></button>
+      <button id="link-apply" class="button primary" data-i18n="dialog.apply"></button>
     </div>
   </dialog>
 
   <dialog id="image-dialog" class="shortcuts-dialog form-dialog" aria-labelledby="image-dialog-title">
-    <div class="dialog-heading"><h2 id="image-dialog-title">Immagine</h2><button class="icon-button" data-dialog-close aria-label="Chiudi"><svg class="icon"><use href="#i-close"/></svg></button></div>
-    <label class="field"><span>Percorso o indirizzo dell'immagine</span>
-      <span class="field-row"><input id="image-src" type="text" placeholder="immagini/foto.png oppure https://…" autocomplete="off" spellcheck="false"><button id="image-browse" class="button">Sfoglia…</button></span>
+    <div class="dialog-heading"><h2 id="image-dialog-title" data-i18n="image.title"></h2><button class="icon-button" data-dialog-close data-i18n-label="dialog.close"><svg class="icon"><use href="#i-close"/></svg></button></div>
+    <label class="field"><span data-i18n="image.field"></span>
+      <span class="field-row"><input id="image-src" type="text" data-i18n-placeholder="image.placeholder" autocomplete="off" spellcheck="false"><button id="image-browse" class="button" data-i18n="image.browse"></button></span>
     </label>
-    <label class="field"><span>Testo alternativo</span><input id="image-alt" type="text" placeholder="Descrizione dell'immagine" autocomplete="off"></label>
+    <label class="field"><span data-i18n="image.alt"></span><input id="image-alt" type="text" data-i18n-placeholder="image.alt.placeholder" autocomplete="off"></label>
     <div class="dialog-actions">
       <span class="status-spacer"></span>
-      <button class="button" data-dialog-close>Annulla</button>
-      <button id="image-apply" class="button primary">Inserisci</button>
+      <button class="button" data-dialog-close data-i18n="dialog.cancel"></button>
+      <button id="image-apply" class="button primary"></button>
     </div>
   </dialog>
 

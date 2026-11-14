@@ -1,6 +1,7 @@
 const { Editor } = require('@tiptap/core');
 const { Selection } = require('@tiptap/pm/state');
-const { createExtensions, RAW_LABELS } = require('./extensions');
+const { createExtensions, RAW_LABEL_KEYS } = require('./extensions');
+const { t } = require('../i18n');
 const { createMarkdownBridge } = require('./markdown-bridge');
 const { highlighter } = require('./highlight');
 const { DocumentSearchExtension, EditorSearch } = require('./search');
@@ -24,7 +25,7 @@ function createVisualEditor({ host, source, renderRaw, resolveImage, onChange, o
       const dom = element('div', 'raw-block');
       dom.dataset.kind = kind;
       dom.contentEditable = 'false';
-      dom.append(element('div', 'raw-block-label', `${RAW_LABELS[kind] || RAW_LABELS.markdown} · contenuto preservato, non modificabile`));
+      dom.append(element('div', 'raw-block-label', t('editor.raw.preserved', { label: t(RAW_LABEL_KEYS[kind] || RAW_LABEL_KEYS.markdown) })));
       const body = element('div', 'raw-block-body');
       if (kind === 'html') {
         body.innerHTML = renderRaw(raw);
@@ -75,11 +76,11 @@ function createVisualEditor({ host, source, renderRaw, resolveImage, onChange, o
       const dom = element('div', 'code-block');
       const input = element('input', 'code-language');
       input.type = 'text';
-      input.placeholder = 'linguaggio';
+      input.placeholder = t('editor.codeLanguage.placeholder');
       input.spellcheck = false;
       input.autocomplete = 'off';
       input.setAttribute('list', 'code-languages');
-      input.setAttribute('aria-label', 'Linguaggio del blocco di codice');
+      input.setAttribute('aria-label', t('editor.codeLanguage'));
       input.value = node.attrs.language || '';
       const pre = document.createElement('pre');
       const code = document.createElement('code');
@@ -121,14 +122,13 @@ function createVisualEditor({ host, source, renderRaw, resolveImage, onChange, o
   const extensions = [...createExtensions({ lowlight: highlighter, nodeViews }), DocumentSearchExtension];
   let bridge = null;
   let origin = null;
+  const surfaceAttributes = () => ({ class: 'markdown-body editor-surface', spellcheck: 'false', 'aria-label': t('editor.label'), role: 'textbox', 'aria-multiline': 'true' });
 
   const editor = new Editor({
     element: host,
     extensions,
     content: '',
-    editorProps: {
-      attributes: { class: 'markdown-body editor-surface', spellcheck: 'false', 'aria-label': 'Contenuto del documento', role: 'textbox', 'aria-multiline': 'true' },
-    },
+    editorProps: { attributes: surfaceAttributes() },
     onUpdate: () => onChange && onChange(),
     onTransaction: () => onStateChange && onStateChange(),
   });
@@ -149,6 +149,14 @@ function createVisualEditor({ host, source, renderRaw, resolveImage, onChange, o
     search: new EditorSearch(editor.view),
     getMarkdown: () => bridge.serialize(editor.state.doc, origin),
     focus: () => editor.view.focus(),
+    /**
+     * Shows the editor's own labels in the current language. Handing ProseMirror a new set of node
+     * views makes it draw the document again: content, selection, history and search stay as they are.
+     */
+    translate() {
+      editor.setOptions({ editorProps: { attributes: surfaceAttributes() } });
+      editor.view.setProps({ nodeViews: editor.extensionManager.nodeViews });
+    },
     destroy: () => editor.destroy(),
   };
 }

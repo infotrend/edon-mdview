@@ -7,6 +7,10 @@ const subscribe = (channel, callback) => {
 };
 
 contextBridge.exposeInMainWorld('mdview', {
+  // Language and version, read once before the first paint.
+  bootstrap: () => ipcRenderer.sendSync('app:bootstrap'),
+  // Opens the product website: the address is fixed in the main process, the page cannot supply one.
+  openWebsite: () => ipcRenderer.invoke('app:open-website'),
   chooseDocument: () => ipcRenderer.invoke('document:choose'),
   openDocument: (filePath) => ipcRenderer.invoke('document:open-path', filePath),
   openRelative: (reference) => ipcRenderer.invoke('document:open-relative', reference),
@@ -34,6 +38,8 @@ contextBridge.exposeInMainWorld('mdview', {
   onExportRequest: (callback) => subscribe('document:export-request', callback),
   onPrintRequest: (callback) => subscribe('document:print-request', callback),
   onShortcuts: (callback) => subscribe('help:shortcuts', callback),
+  onAbout: (callback) => subscribe('help:about', callback),
+  onLanguageChanged: (callback) => subscribe('language:changed', callback),
   onSaveRequest: (callback) => subscribe('document:save-request', callback),
   onSaveAsRequest: (callback) => subscribe('document:save-as-request', callback),
   onEditToggle: (callback) => subscribe('edit:toggle', callback),

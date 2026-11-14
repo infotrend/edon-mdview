@@ -12,6 +12,8 @@ const {
   ensureMarkdownExtension,
   toDocumentReference,
 } = require('./main-utils');
+const { LANGUAGES, resolveLanguage, isLanguage, translate } = require('./i18n');
+const { WEBSITE_URL } = require('./about');
 
 const MAX_DOCUMENT_SIZE = 25 * 1024 * 1024;
 const MAX_IMAGE_SIZE = 25 * 1024 * 1024;
@@ -38,7 +40,11 @@ let closeConfirmed = false;
 let unsavedPrompt = null;
 let saveRequestId = 0;
 const pendingSaveRequests = new Map();
+// Interface language: Italian on Italian systems, English elsewhere, unless the user picked one from the menu.
+let language = 'en';
+const t = (key, parameters) => translate(language, key, parameters);
 const recentFilePath = () => path.join(app.getPath('userData'), 'recent-files.json');
+const settingsFilePath = () => path.join(app.getPath('userData'), 'settings.json');
 
 // Automated tests run with their own profile: the single-instance lock and the recent files then
 // belong to the test run, which can never hand its documents to a copy the user already has open.
@@ -71,6 +77,41 @@ function saveRecentFiles() {
   }
 }
 
+function loadSettings() {
+  try {
+    const saved = JSON.parse(fs.readFileSync(settingsFilePath(), 'utf8'));
+    return saved && typeof saved === 'object' && !Array.isArray(saved) ? saved : {};
+  } catch {
+    return {};
+  }
+}
+
+function saveSettings(settings) {
+  try {
+    fs.mkdirSync(path.dirname(settingsFilePath()), { recursive: true });
+    fs.writeFileSync(settingsFilePath(), JSON.stringify(settings, null, 2), 'utf8');
+  } catch {
+    // A blocked preference file only means the choice is not remembered at the next start.
+  }
+}
+
+function systemLanguage() {
+  // Automated tests pin the system language: their expectations must not depend on the machine.
+  if (process.env.EDON_MDVIEW_LANGUAGE) return process.env.EDON_MDVIEW_LANGUAGE;
+  const preferred = typeof app.getPreferredSystemLanguages === 'function' ? app.getPreferredSystemLanguages() : [];
+  return preferred[0] || app.getLocale();
+}
+
+/** Applies a language chosen from the menu at once (menu and window) and remembers it for the next start. */
+function setLanguage(next) {
+  if (!isLanguage(next)) return;
+  const changed = next !== language;
+  language = next;
+  saveSettings({ ...loadSettings(), language });
+  rebuildMenu();
+  if (changed && mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send('language:changed', language);
+}
+
 function rememberDocument(filePath) {
   recentFiles = [filePath, ...recentFiles.filter((file) => file.toLowerCase() !== filePath.toLowerCase())].slice(0, 8);
   saveRecentFiles();
@@ -83,12 +124,12 @@ function notify(type, message) {
 
 async function readDocument(filePath) {
   const resolved = path.resolve(filePath);
-  if (!isMarkdownPath(resolved)) throw new Error('Il file selezionato non è un documento Markdown.');
+  if (!isMarkdownPath(resolved)) throw new Error(t('error.notMarkdown'));
   const stat = await fsp.stat(resolved);
-  if (!stat.isFile()) throw new Error('Il percorso selezionato non è un file.');
-  if (stat.size > MAX_DOCUMENT_SIZE) throw new Error('Il documento supera il limite di 25 MB.');
+  if (!stat.isFile()) throw new Error(t('error.notFile'));
+  if (stat.size > MAX_DOCUMENT_SIZE) throw new Error(t('error.tooLarge'));
   const content = await fsp.readFile(resolved, 'utf8');
-  if (content.includes('\0')) throw new Error('Il file non sembra essere un documento di testo.');
+  if (content.includes('\0')) throw new Error(t('error.notText'));
   return {
     path: resolved,
     name: path.basename(resolved),
@@ -107,13 +148,13 @@ function sendDocumentChanged(document) {
 function askUnsavedChanges() {
   if (!mainWindow || mainWindow.isDestroyed()) return Promise.resolve('discard');
   if (!unsavedPrompt) {
-    const name = currentDocument ? path.basename(currentDocument) : 'documento';
+    const name = currentDocument ? path.basename(currentDocument) : t('unsaved.fallbackName');
     unsavedPrompt = dialog.showMessageBox(mainWindow, {
       type: 'warning',
-      title: 'Modifiche non salvate',
-      message: `Vuoi salvare le modifiche a \u00AB${name}\u00BB?`,
-      detail: 'Se non le salvi, le modifiche andranno perse.',
-      buttons: ['Salva', 'Non salvare', 'Annulla'],
+      title: t('unsaved.title'),
+      message: t('unsaved.message', { name }),
+      detail: t('unsaved.detail'),
+      buttons: [t('unsaved.save'), t('unsaved.discard'), t('unsaved.cancel')],
       defaultId: 0,
       cancelId: 2,
       noLink: true,
@@ -144,8 +185,8 @@ async function confirmUnsavedChanges() {
 }
 
 function validateContent(content) {
-  if (typeof content !== 'string' || content.includes('\0')) throw new Error('Contenuto del documento non valido.');
-  if (Buffer.byteLength(content, 'utf8') > MAX_DOCUMENT_SIZE) throw new Error('Il documento supera il limite di 25 MB.');
+  if (typeof content !== 'string' || content.includes('\0')) throw new Error(t('error.invalidContent'));
+  if (Buffer.byteLength(content, 'utf8') > MAX_DOCUMENT_SIZE) throw new Error(t('error.tooLarge'));
 }
 
 async function writeDocument(filePath, content) {
@@ -162,7 +203,7 @@ async function writeDocument(filePath, content) {
 /** Writes the editor content to the open document only: the renderer never supplies a path. */
 async function saveDocument(content) {
   try {
-    if (!currentDocument) throw new Error('Nessun documento aperto.');
+    if (!currentDocument) throw new Error(t('error.noDocument'));
     validateContent(content);
     const target = currentDocument;
     let onDisk = null;
@@ -184,21 +225,21 @@ async function saveDocument(content) {
 
 async function saveDocumentAs(content) {
   try {
-    if (!currentDocument || !mainWindow) throw new Error('Nessun documento aperto.');
+    if (!currentDocument || !mainWindow) throw new Error(t('error.noDocument'));
     validateContent(content);
     const result = await dialog.showSaveDialog(mainWindow, {
-      title: 'Salva con nome',
+      title: t('dialog.saveAs.title'),
       defaultPath: currentDocument,
       filters: [
-        { name: 'Documenti Markdown', extensions: ['md', 'markdown', 'mdown', 'mkd'] },
-        { name: 'File di testo', extensions: ['txt'] },
+        { name: t('dialog.filter.markdown'), extensions: ['md', 'markdown', 'mdown', 'mkd'] },
+        { name: t('dialog.filter.text'), extensions: ['txt'] },
       ],
     });
     if (result.canceled || !result.filePath) return { status: 'canceled' };
     const chosen = path.resolve(result.filePath);
     const target = ensureMarkdownExtension(chosen);
     // The system dialog only confirmed overwriting the name the user typed.
-    if (target !== chosen && fs.existsSync(target)) throw new Error(`Esiste gi\u00E0 un file \u00AB${path.basename(target)}\u00BB: scegli un altro nome.`);
+    if (target !== chosen && fs.existsSync(target)) throw new Error(t('error.fileExists', { name: path.basename(target) }));
     const previous = currentDocument;
     stopWatching();
     try {
@@ -219,15 +260,15 @@ async function saveDocumentAs(content) {
 async function chooseImage() {
   if (!currentDocument || !mainWindow) return null;
   const result = await dialog.showOpenDialog(mainWindow, {
-    title: 'Scegli un\'immagine',
+    title: t('dialog.image.title'),
     defaultPath: path.dirname(currentDocument),
     properties: ['openFile'],
-    filters: [{ name: 'Immagini', extensions: [...IMAGE_TYPES.keys()].map((extension) => extension.slice(1)) }],
+    filters: [{ name: t('dialog.filter.images'), extensions: [...IMAGE_TYPES.keys()].map((extension) => extension.slice(1)) }],
   });
   if (result.canceled || !result.filePaths[0]) return null;
   const reference = toDocumentReference(currentDocument, result.filePaths[0]);
   if (!reference || !IMAGE_TYPES.has(path.extname(result.filePaths[0]).toLowerCase())) {
-    return { error: 'L\'immagine deve trovarsi nella cartella del documento o in una sua sottocartella.' };
+    return { error: t('error.imageOutside') };
   }
   return { reference, name: path.basename(result.filePaths[0]) };
 }
@@ -255,14 +296,14 @@ function watchDocument(filePath) {
           if (currentDocument !== filePath || contentHash(document.content) === diskHash) return;
           sendDocumentChanged(document);
         } catch (error) {
-          if (currentDocument === filePath) notify('warning', `Ricaricamento non riuscito: ${error.message}`);
+          if (currentDocument === filePath) notify('warning', t('notify.reloadFailed', { message: error.message }));
         }
       };
       reloadTimer = setTimeout(check, 180);
     });
-    watcher.on('error', () => notify('warning', 'Aggiornamento automatico non disponibile per questo file.'));
+    watcher.on('error', () => notify('warning', t('notify.watchUnavailable')));
   } catch {
-    notify('warning', 'Aggiornamento automatico non disponibile per questo file.');
+    notify('warning', t('notify.watchUnavailable'));
   }
 }
 
@@ -292,11 +333,11 @@ async function loadDocument(filePath) {
 async function chooseAndOpen() {
   if (!mainWindow) return;
   const result = await dialog.showOpenDialog(mainWindow, {
-    title: 'Apri documento Markdown',
+    title: t('dialog.open.title'),
     properties: ['openFile'],
     filters: [
-      { name: 'Documenti Markdown', extensions: ['md', 'markdown', 'mdown', 'mkd', 'txt'] },
-      { name: 'Tutti i file', extensions: ['*'] },
+      { name: t('dialog.filter.markdown'), extensions: ['md', 'markdown', 'mdown', 'mkd', 'txt'] },
+      { name: t('dialog.filter.all'), extensions: ['*'] },
     ],
   });
   if (!result.canceled && result.filePaths[0]) await loadDocument(result.filePaths[0]);
@@ -314,61 +355,73 @@ async function reloadDocument() {
 function rebuildMenu() {
   const recentMenu = recentFiles.length
     ? recentFiles.map((file) => ({ label: path.basename(file), toolTip: file, click: () => loadDocument(file).catch(() => {}) }))
-    : [{ label: 'Nessun file recente', enabled: false }];
+    : [{ label: t('menu.file.noRecent'), enabled: false }];
 
   const template = [
     {
-      label: 'File',
+      label: t('menu.file'),
       submenu: [
-        { label: 'Apri…', accelerator: 'CmdOrCtrl+O', click: chooseAndOpen },
-        { label: 'Apri recente', submenu: [...recentMenu, { type: 'separator' }, { label: 'Svuota elenco', enabled: recentFiles.length > 0, click: () => { recentFiles = []; saveRecentFiles(); rebuildMenu(); } }] },
+        { label: t('menu.file.open'), accelerator: 'CmdOrCtrl+O', click: chooseAndOpen },
+        { label: t('menu.file.openRecent'), submenu: [...recentMenu, { type: 'separator' }, { label: t('menu.file.clearRecent'), enabled: recentFiles.length > 0, click: () => { recentFiles = []; saveRecentFiles(); rebuildMenu(); } }] },
         { type: 'separator' },
-        { label: 'Salva', accelerator: 'CmdOrCtrl+S', click: () => mainWindow?.webContents.send('document:save-request', { id: null }) },
-        { label: 'Salva con nome…', accelerator: 'CmdOrCtrl+Shift+S', click: () => mainWindow?.webContents.send('document:save-as-request') },
+        { label: t('menu.file.save'), accelerator: 'CmdOrCtrl+S', click: () => mainWindow?.webContents.send('document:save-request', { id: null }) },
+        { label: t('menu.file.saveAs'), accelerator: 'CmdOrCtrl+Shift+S', click: () => mainWindow?.webContents.send('document:save-as-request') },
         { type: 'separator' },
-        { label: 'Ricarica', accelerator: 'F5', click: reloadDocument },
+        { label: t('menu.file.reload'), accelerator: 'F5', click: reloadDocument },
         { type: 'separator' },
-        { label: 'Esporta HTML…', accelerator: 'CmdOrCtrl+Shift+E', click: () => mainWindow?.webContents.send('document:export-request') },
-        { label: 'Stampa…', accelerator: 'CmdOrCtrl+P', click: () => mainWindow?.webContents.send('document:print-request') },
+        { label: t('menu.file.exportHtml'), accelerator: 'CmdOrCtrl+Shift+E', click: () => mainWindow?.webContents.send('document:export-request') },
+        { label: t('menu.file.print'), accelerator: 'CmdOrCtrl+P', click: () => mainWindow?.webContents.send('document:print-request') },
         { type: 'separator' },
-        process.platform === 'darwin' ? { role: 'close', label: 'Chiudi finestra' } : { role: 'quit', label: 'Esci' },
+        process.platform === 'darwin' ? { role: 'close', label: t('menu.file.closeWindow') } : { role: 'quit', label: t('menu.file.quit') },
       ],
     },
     {
-      label: 'Modifica',
+      label: t('menu.edit'),
       submenu: [
-        { label: 'Modifica documento', accelerator: 'CmdOrCtrl+E', click: () => mainWindow?.webContents.send('edit:toggle') },
+        { label: t('menu.edit.editDocument'), accelerator: 'CmdOrCtrl+E', click: () => mainWindow?.webContents.send('edit:toggle') },
         { type: 'separator' },
         // The editor keeps its own history: the shortcuts are shown here but handled by the page.
-        { label: 'Annulla', accelerator: 'CmdOrCtrl+Z', registerAccelerator: false, click: () => mainWindow?.webContents.send('edit:command', 'undo') },
-        { label: 'Ripeti', accelerator: 'CmdOrCtrl+Y', registerAccelerator: false, click: () => mainWindow?.webContents.send('edit:command', 'redo') },
+        { label: t('menu.edit.undo'), accelerator: 'CmdOrCtrl+Z', registerAccelerator: false, click: () => mainWindow?.webContents.send('edit:command', 'undo') },
+        { label: t('menu.edit.redo'), accelerator: 'CmdOrCtrl+Y', registerAccelerator: false, click: () => mainWindow?.webContents.send('edit:command', 'redo') },
         { type: 'separator' },
-        { role: 'copy', label: 'Copia' },
-        { role: 'cut', label: 'Taglia' },
-        { role: 'paste', label: 'Incolla' },
-        { role: 'selectAll', label: 'Seleziona tutto' },
+        { role: 'copy', label: t('menu.edit.copy') },
+        { role: 'cut', label: t('menu.edit.cut') },
+        { role: 'paste', label: t('menu.edit.paste') },
+        { role: 'selectAll', label: t('menu.edit.selectAll') },
         { type: 'separator' },
-        { label: 'Cerca nel documento', accelerator: 'CmdOrCtrl+F', click: () => mainWindow?.webContents.send('search:open') },
+        { label: t('menu.edit.find'), accelerator: 'CmdOrCtrl+F', click: () => mainWindow?.webContents.send('search:open') },
       ],
     },
     {
-      label: 'Visualizza',
+      label: t('menu.view'),
       submenu: [
-        { label: 'Mostra/nascondi indice', accelerator: 'CmdOrCtrl+\\', click: () => mainWindow?.webContents.send('view:toggle-sidebar') },
-        { label: 'Cambia tema', accelerator: 'CmdOrCtrl+Shift+T', click: () => mainWindow?.webContents.send('view:toggle-theme') },
+        { label: t('menu.view.toggleSidebar'), accelerator: 'CmdOrCtrl+\\', click: () => mainWindow?.webContents.send('view:toggle-sidebar') },
+        { label: t('menu.view.toggleTheme'), accelerator: 'CmdOrCtrl+Shift+T', click: () => mainWindow?.webContents.send('view:toggle-theme') },
         { type: 'separator' },
-        { label: 'Aumenta zoom', accelerator: 'CmdOrCtrl+Plus', click: () => mainWindow?.webContents.send('view:zoom', 0.1) },
-        { label: 'Riduci zoom', accelerator: 'CmdOrCtrl+-', click: () => mainWindow?.webContents.send('view:zoom', -0.1) },
-        { label: 'Zoom predefinito', accelerator: 'CmdOrCtrl+0', click: () => mainWindow?.webContents.send('view:zoom', 0) },
+        { label: t('menu.view.zoomIn'), accelerator: 'CmdOrCtrl+Plus', click: () => mainWindow?.webContents.send('view:zoom', 0.1) },
+        { label: t('menu.view.zoomOut'), accelerator: 'CmdOrCtrl+-', click: () => mainWindow?.webContents.send('view:zoom', -0.1) },
+        { label: t('menu.view.zoomReset'), accelerator: 'CmdOrCtrl+0', click: () => mainWindow?.webContents.send('view:zoom', 0) },
         { type: 'separator' },
-        { role: 'togglefullscreen', label: 'Schermo intero' },
+        { role: 'togglefullscreen', label: t('menu.view.fullscreen') },
+        { type: 'separator' },
+        {
+          id: 'language',
+          label: t('menu.view.language'),
+          submenu: LANGUAGES.map((code) => ({
+            id: `language-${code}`,
+            label: t(`menu.view.language.${code}`),
+            type: 'radio',
+            checked: code === language,
+            click: () => setLanguage(code),
+          })),
+        },
       ],
     },
     {
-      label: 'Aiuto',
+      label: t('menu.help'),
       submenu: [
-        { label: 'Scorciatoie da tastiera', click: () => mainWindow?.webContents.send('help:shortcuts') },
-        { label: 'Informazioni su EDON MDView', click: () => dialog.showMessageBox(mainWindow, { type: 'info', title: 'EDON MDView', message: `EDON MDView ${app.getVersion()}`, detail: 'Sviluppato da INFOTREND SRL\nLicenza FSL-1.1-MIT\n\nVisualizzatore ed editor Markdown per Windows\nRendering locale, sicuro e senza tracciamento.' }) },
+        { label: t('menu.help.shortcuts'), click: () => mainWindow?.webContents.send('help:shortcuts') },
+        { id: 'about', label: t('menu.help.about'), click: () => mainWindow?.webContents.send('help:about') },
       ],
     },
   ];
@@ -448,32 +501,37 @@ if (!singleInstance) {
 
   app.whenReady().then(() => {
     loadRecentFiles();
+    language = resolveLanguage({ saved: loadSettings().language, system: systemLanguage() });
     rebuildMenu();
 
     protocol.handle('mdview', async (request) => {
       try {
-        if (!currentDocument) return new Response('Nessun documento aperto', { status: 403 });
+        if (!currentDocument) return new Response(t('error.noDocument'), { status: 403 });
         const resourcePath = resolveLocalPath(currentDocument, request.url);
         if (!resourcePath || !IMAGE_TYPES.has(path.extname(resourcePath).toLowerCase())) {
-          return new Response('Risorsa non consentita', { status: 403 });
+          return new Response(t('error.resourceNotAllowed'), { status: 403 });
         }
         const [rootReal, resourceReal] = await Promise.all([
           fsp.realpath(path.dirname(currentDocument)),
           fsp.realpath(resourcePath),
         ]);
         const { isPathInside } = require('./main-utils');
-        if (!isPathInside(rootReal, resourceReal)) return new Response('Risorsa esterna non consentita', { status: 403 });
+        if (!isPathInside(rootReal, resourceReal)) return new Response(t('error.resourceExternal'), { status: 403 });
         return net.fetch(pathToFileURL(resourceReal).toString());
       } catch {
-        return new Response('Risorsa non trovata', { status: 404 });
+        return new Response(t('error.resourceNotFound'), { status: 404 });
       }
     });
 
+    // The window asks once, synchronously, so that its first paint is already in the right language.
+    ipcMain.on('app:bootstrap', (event) => { event.returnValue = { language, version: app.getVersion() }; });
+    // No argument on purpose: the window can only ask for the product website, never for an address of its own.
+    ipcMain.handle('app:open-website', () => shell.openExternal(WEBSITE_URL));
     ipcMain.handle('document:choose', chooseAndOpen);
     ipcMain.handle('document:open-path', (event, filePath) => loadDocument(filePath));
     ipcMain.handle('document:open-relative', (event, reference) => {
       const filePath = resolveLinkedDocument(currentDocument, reference);
-      if (!filePath) throw new Error('Il collegamento non punta a un documento Markdown locale consentito.');
+      if (!filePath) throw new Error(t('error.linkNotAllowed'));
       return loadDocument(filePath);
     });
     ipcMain.handle('document:reload', reloadDocument);
@@ -489,7 +547,7 @@ if (!singleInstance) {
     ipcMain.handle('document:print', () => {
       if (!mainWindow || !currentDocument) return;
       mainWindow.webContents.print({ printBackground: true }, (success, reason) => {
-        if (!success && reason !== 'cancelled') notify('error', `Stampa non riuscita: ${reason}`);
+        if (!success && reason !== 'cancelled') notify('error', t('notify.printFailed', { reason }));
       });
     });
     ipcMain.handle('document:resolve-resources', (event, sources) => {
@@ -525,9 +583,9 @@ if (!singleInstance) {
     ipcMain.handle('document:export', async (event, html) => {
       if (!currentDocument || typeof html !== 'string') return null;
       const result = await dialog.showSaveDialog(mainWindow, {
-        title: 'Esporta documento HTML',
+        title: t('dialog.export.title'),
         defaultPath: path.join(path.dirname(currentDocument), `${path.basename(currentDocument, path.extname(currentDocument))}.html`),
-        filters: [{ name: 'Documento HTML', extensions: ['html'] }],
+        filters: [{ name: t('dialog.filter.html'), extensions: ['html'] }],
       });
       if (result.canceled || !result.filePath) return null;
       await fsp.writeFile(result.filePath, html, 'utf8');

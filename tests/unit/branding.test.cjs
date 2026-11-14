@@ -30,9 +30,10 @@ test('la finestra usa il logo EDON accessibile e il nuovo nome', () => {
   assert.match(html, /id="edon-mark"/);
   assert.match(html, /aria-hidden="true" class="edon-logo"/);
   assert.doesNotMatch(html, /M<span>↓<\/span>/);
-  const main = read('src/main.js');
-  assert.match(main, /INFOTREND SRL/);
-  assert.match(main, /FSL-1\.1-MIT/);
+  const about = require('../../src/about');
+  assert.equal(about.PRODUCT_NAME, 'EDON MDView');
+  assert.equal(about.DEVELOPER, 'INFOTREND SRL');
+  assert.equal(about.LICENSE, 'FSL-1.1-MIT');
 });
 
 test('le risorse vettoriali usano il logo EDON originale e aggiungono la sigla MD', () => {

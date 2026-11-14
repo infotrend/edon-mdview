@@ -1,6 +1,6 @@
 # EDON MDView
 
-Visualizzatore ed editor visivo Markdown desktop per Windows 10 e 11 (64 bit), con interfaccia in italiano e funzionamento locale.
+Visualizzatore ed editor visivo Markdown desktop per Windows 10 e 11 (64 bit), con interfaccia in italiano e in inglese e funzionamento locale.
 
 **Sviluppatore:** INFOTREND SRL  
 **Licenza:** [FSL-1.1-MIT](LICENSE)
@@ -32,6 +32,7 @@ Gli eseguibili includono tutto il necessario: Node.js non deve essere installato
 - Indice navigabile e ricerca con risultati evidenziati.
 - Modifica visiva del documento con salvataggio in Markdown: si formatta con pulsanti e scorciatoie, senza scrivere i simboli a mano.
 - Temi chiaro e scuro, zoom e impostazioni persistenti.
+- Interfaccia in italiano e in inglese, scelta in base alla lingua del sistema e modificabile dal menu.
 - Ricaricamento automatico quando il file viene salvato da un altro programma.
 - Apertura di collegamenti ad altri documenti Markdown locali.
 - Immagini locali e remote; quelle locali vengono incorporate nell'HTML esportato.
@@ -68,6 +69,16 @@ Dentro un blocco modificato il Markdown viene uniformato:
 - modificare una voce riscrive l'intero elenco, modificare una cella l'intera tabella.
 
 Le celle delle tabelle contengono solo testo in linea. In modifica `--` e le virgolette appaiono come sono scritti nel file: la sostituzione tipografica avviene solo in lettura.
+
+## Lingua
+
+L'interfaccia è disponibile in italiano e in inglese: menu, barre, finestre di dialogo, messaggi e suggerimenti.
+
+- **All'avvio:** se la lingua di Windows è l'italiano l'app parte in italiano, in tutti gli altri casi in inglese.
+- **Cambio manuale:** **Visualizza → Lingua → Italiano / Inglese** (in inglese **View → Language → Italian / English**). Il cambio è immediato, senza riavvio, e non tocca il documento aperto né le modifiche non salvate.
+- **Scelta ricordata:** la lingua scelta dal menu viene salvata in `%APPDATA%\EDON MDView\settings.json` e usata agli avvii successivi. Finché non si sceglie nulla il file non esiste e la lingua segue quella del sistema; eliminandolo si torna alla scelta automatica.
+
+**Aiuto → Informazioni** mostra versione, licenza, il collegamento a [edon.systems](https://edon.systems) e i ringraziamenti ai principali progetti open source utilizzati, ciascuno con la propria licenza.
 
 ## Scorciatoie
 
@@ -129,3 +140,5 @@ npm run dist    # genera installer e versione portabile in release/
 ```
 
 Il progetto usa Electron, markdown-it, DOMPurify, highlight.js e, per la modifica visiva, Tiptap (ProseMirror); tutte le librerie sono incluse nell'app e funzionano senza rete. I test end-to-end usano una copia temporanea dei documenti di prova e un profilo separato (`EDON_MDVIEW_USER_DATA`): non modificano i file originali e non interferiscono con una copia dell'app già aperta.
+
+I testi dell'interfaccia stanno solo nei due dizionari `src/i18n/it.js` e `src/i18n/en.js`, che devono avere le stesse chiavi (lo verifica un test); la pagina li richiama con gli attributi `data-i18n`. I test fissano la lingua con `EDON_MDVIEW_LANGUAGE`, che sostituisce quella del sistema, così il risultato non dipende dal computer su cui girano. L'elenco dei ringraziamenti è in `src/about.js`: un test controlla che ogni voce sia una dipendenza reale e che la licenza coincida con quella dichiarata dal pacchetto.

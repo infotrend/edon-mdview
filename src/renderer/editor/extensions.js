@@ -8,12 +8,15 @@ const { BulletList, OrderedList, TaskList, TaskItem } = require('@tiptap/extensi
 const { Table, TableRow, TableHeader, TableCell } = require('@tiptap/extension-table');
 const { CodeBlockLowlight } = require('@tiptap/extension-code-block-lowlight');
 
-const RAW_LABELS = {
-  html: 'HTML',
-  footnote: 'Nota a piè di pagina',
-  reference: 'Definizione di collegamento',
-  frontmatter: 'Intestazione del documento',
-  markdown: 'Markdown non modificabile',
+const { t } = require('../i18n');
+
+// Dictionary keys of the labels shown on protected blocks, by kind.
+const RAW_LABEL_KEYS = {
+  html: 'editor.raw.html',
+  footnote: 'editor.raw.footnote',
+  reference: 'editor.raw.reference',
+  frontmatter: 'editor.raw.frontmatter',
+  markdown: 'editor.raw.markdown',
 };
 
 // Without a real lowlight instance (unit tests) the schema is identical but nothing is highlighted.
@@ -114,7 +117,7 @@ function createExtensions(options = {}) {
       return [{ tag: 'span[data-raw-inline]' }];
     },
     renderHTML({ node, HTMLAttributes }) {
-      const title = node.attrs.kind === 'footnote' ? 'Richiamo di nota (preservato)' : 'HTML in linea (preservato)';
+      const title = t(node.attrs.kind === 'footnote' ? 'editor.rawInline.footnote' : 'editor.rawInline.html');
       return ['span', mergeAttributes(HTMLAttributes, { class: 'raw-inline', title, contenteditable: 'false' }), rawInlineLabel(node)];
     },
   });
@@ -175,7 +178,7 @@ function createExtensions(options = {}) {
     TaskList.extend({ addAttributes() { return tightAttribute(this.parent?.()); } }),
     TaskItem.configure({
       nested: true,
-      a11y: { checkboxLabel: (node, checked) => `${checked ? 'Attività completata' : 'Attività da completare'}: ${node.textContent || 'vuota'}` },
+      a11y: { checkboxLabel: (node, checked) => t(checked ? 'editor.task.done' : 'editor.task.todo', { text: node.textContent || t('editor.task.empty') }) },
     }),
     Image.extend({
       addNodeView() {
@@ -199,4 +202,4 @@ function createExtensions(options = {}) {
   ];
 }
 
-module.exports = { createExtensions, RAW_LABELS };
+module.exports = { createExtensions, RAW_LABEL_KEYS };

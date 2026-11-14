@@ -14,7 +14,7 @@ fs.cpSync(path.join(root, 'tests', 'fixtures'), temp, { recursive: true });
 let application;
 async function run() {
   // Own profile: the single-instance lock must not hand the test document to a copy the user has open.
-  const env = { ...process.env, EDON_MDVIEW_USER_DATA: path.join(temp, 'profilo') };
+  const env = { ...process.env, EDON_MDVIEW_USER_DATA: path.join(temp, 'profilo'), EDON_MDVIEW_LANGUAGE: 'it' };
   delete env.ELECTRON_RUN_AS_NODE;
   application = await electron.launch({
     executablePath,

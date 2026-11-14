@@ -45,7 +45,7 @@ async function waitForDebugger(port) {
 async function run() {
   const port = await availablePort();
   // Own profile: the single-instance lock must not hand the test document to a copy the user has open.
-  const env = { ...process.env, EDON_MDVIEW_USER_DATA: path.join(temp, 'profilo') };
+  const env = { ...process.env, EDON_MDVIEW_USER_DATA: path.join(temp, 'profilo'), EDON_MDVIEW_LANGUAGE: 'it' };
   delete env.ELECTRON_RUN_AS_NODE;
   launcher = spawn(executablePath, [documentPath, `--remote-debugging-port=${port}`], {
     cwd: temp,

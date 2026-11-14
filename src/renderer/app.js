@@ -3,6 +3,13 @@ const { createMarkdownRenderer } = require('./markdown');
 const { DocumentSearch } = require('./search');
 const { createVisualEditor } = require('./editor/editor');
 const { createToolbar } = require('./editor/toolbar');
+const i18n = require('./i18n');
+const { PRODUCT_NAME, DEVELOPER, LICENSE, WEBSITE_URL, CREDITS } = require('../about');
+
+const { t } = i18n;
+// Language and version come from the main process before anything is drawn.
+const bootstrap = window.mdview.bootstrap();
+i18n.setLanguage(bootstrap.language);
 
 const $ = (selector) => document.querySelector(selector);
 const content = $('#content');
@@ -15,6 +22,9 @@ const searchPanel = $('#search-panel');
 const searchInput = $('#search-input');
 const searchCount = $('#search-count');
 const shortcutsDialog = $('#shortcuts-dialog');
+const aboutDialog = $('#about-dialog');
+// The open document is never translated: it may carry `data-*` attributes of its own.
+const DOCUMENT_AREA = '#content:not(.welcome), #editor';
 const renderMarkdown = createMarkdownRenderer(DOMPurify);
 const documentSearch = new DocumentSearch(content);
 const toolbar = createToolbar({
@@ -103,12 +113,12 @@ function collectHeadings() {
 
 function buildToc() {
   toc.replaceChildren();
-  tocHeadings = collectHeadings();
+  tocHeadings = currentDocument ? collectHeadings() : [];
   $('#heading-count').textContent = String(tocHeadings.length);
   if (!tocHeadings.length) {
     const empty = document.createElement('div');
     empty.className = 'toc-empty';
-    empty.textContent = 'Nessun titolo nel documento.';
+    empty.textContent = t(currentDocument ? 'toc.empty' : 'toc.welcome');
     toc.append(empty);
     return;
   }
@@ -119,7 +129,7 @@ function buildToc() {
     link.href = heading.id ? `#${heading.id}` : '#';
     link.dataset.index = String(index);
     link.dataset.level = heading.tagName.slice(1);
-    link.textContent = heading.textContent.trim() || 'Sezione senza titolo';
+    link.textContent = heading.textContent.trim() || t('toc.untitled');
     link.title = link.textContent;
     fragment.append(link);
   });
@@ -143,10 +153,10 @@ function updateActiveHeading() {
 }
 
 function updateStats() {
-  const text = documentRoot().textContent.trim();
+  const text = currentDocument ? documentRoot().textContent.trim() : '';
   const words = text ? text.split(/\s+/u).length : 0;
-  $('#word-count').textContent = `${words.toLocaleString('it-IT')} ${words === 1 ? 'parola' : 'parole'}`;
-  $('#reading-time').textContent = `${Math.max(1, Math.ceil(words / 220))} min`;
+  $('#word-count').textContent = t(words === 1 ? 'status.words.one' : 'status.words.other', { count: words.toLocaleString(i18n.locale()) });
+  $('#reading-time').textContent = t('status.minutes', { count: currentDocument ? Math.max(1, Math.ceil(words / 220)) : 0 });
 }
 
 /** The search of the document on screen: marks in the rendered article, decorations in the editor. */
@@ -158,7 +168,7 @@ function updateSearchCount() {
   const search = activeSearch();
   const count = search.matches.length;
   const position = count ? search.current + 1 : 0;
-  searchCount.textContent = count ? `${position} di ${count}` : '0 risultati';
+  searchCount.textContent = count ? t('search.position', { position, count }) : t('search.none');
 }
 
 function runSearch() {
@@ -234,18 +244,22 @@ function restoreScroll(ratio) {
 }
 
 function updateDocumentChrome() {
-  if (!currentDocument) return;
-  document.title = `${dirty ? '● ' : ''}${currentDocument.name} — EDON MDView`;
+  if (!currentDocument) {
+    $('#document-name').textContent = t('status.ready');
+    $('#status-text').textContent = t('status.ready');
+    return;
+  }
+  document.title = `${dirty ? '● ' : ''}${currentDocument.name} — ${PRODUCT_NAME}`;
   $('#document-name').textContent = currentDocument.name;
   $('#document-name').title = currentDocument.path;
   $('#dirty-indicator').hidden = !dirty;
   $('#status-path').textContent = currentDocument.path;
   $('#status-path').title = currentDocument.path;
   $('.live-status').classList.toggle('unsaved', dirty);
-  let status = 'Aggiornamento automatico attivo';
-  if (dirty) status = 'Modifiche non salvate';
-  else if (isEditing() && savedAt) status = `Salvato alle ${savedAt.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })}`;
-  else if (isEditing()) status = 'Modalità modifica';
+  let status = t('status.autoRefresh');
+  if (dirty) status = t('status.unsaved');
+  else if (isEditing() && savedAt) status = t('status.savedAt', { time: savedAt.toLocaleTimeString(i18n.locale(), { hour: '2-digit', minute: '2-digit' }) });
+  else if (isEditing()) status = t('status.editing');
   $('#status-text').textContent = status;
   $('#save-button').disabled = !dirty;
   $('#edit-button').disabled = false;
@@ -416,7 +430,7 @@ async function performSave(saveAs) {
   if (!saveAs) {
     if (!isEditing()) return false;
     if (pendingDiskVersion) {
-      showToast('Il file è cambiato su disco: scegli prima se ricaricarlo o mantenere le tue modifiche.', 'warning');
+      showToast(t('toast.resolveConflictFirst'), 'warning');
       $('#conflict-keep').focus();
       return false;
     }
@@ -426,13 +440,13 @@ async function performSave(saveAs) {
   const result = saveAs ? await window.mdview.saveDocumentAs(markdown) : await window.mdview.saveDocument(markdown);
   if (result.status === 'saved') {
     markSaved(markdown, result);
-    showToast(saveAs ? `Documento salvato: ${result.path}` : 'Documento salvato');
+    showToast(saveAs ? t('toast.savedAs', { path: result.path }) : t('toast.saved'));
     return true;
   }
   if (result.status === 'conflict') {
-    showToast('Il file è cambiato su disco mentre lo modificavi: nulla è stato sovrascritto.', 'warning');
+    showToast(t('toast.saveConflict'), 'warning');
   } else if (result.status === 'error') {
-    showToast(`Salvataggio non riuscito: ${result.message}`, 'error');
+    showToast(t('toast.saveFailed', { message: result.message }), 'error');
   }
   return false;
 }
@@ -440,7 +454,7 @@ async function performSave(saveAs) {
 /** Saves run one at a time: a second request waits for the first and reports its own result. */
 function queueSave(saveAs) {
   const run = () => performSave(saveAs).catch((error) => {
-    showToast(`Salvataggio non riuscito: ${error.message}`, 'error');
+    showToast(t('toast.saveFailed', { message: error.message }), 'error');
     return false;
   });
   saveInProgress = saveInProgress ? saveInProgress.then(run) : run();
@@ -455,7 +469,7 @@ const saveDocumentAs = () => queueSave(true);
 function handleDiskChange(documentData) {
   if (!isEditing()) {
     applyDocument(documentData, true);
-    showToast('Documento aggiornato');
+    showToast(t('toast.documentUpdated'));
     return;
   }
   if (documentData.content === currentDocument.content) {
@@ -470,7 +484,7 @@ function handleDiskChange(documentData) {
   }
   if (!dirty) {
     reloadEditor(documentData);
-    showToast('Documento aggiornato');
+    showToast(t('toast.documentUpdated'));
     return;
   }
   setConflict(documentData);
@@ -487,6 +501,56 @@ function handleDocumentLoaded(documentData) {
   dirty = false;
   window.mdview.setDirty(false);
   applyDocument(documentData);
+}
+
+// ------------------------------------------------------------------ language and About dialog
+
+/** The menu can ask for a dialog while it is already open, or while another one is. */
+function openDialog(dialog) {
+  if (dialog.open) return;
+  for (const other of document.querySelectorAll('dialog[open]')) other.close();
+  dialog.showModal();
+}
+
+function renderAbout() {
+  $('#about-name').textContent = PRODUCT_NAME;
+  $('#about-version').textContent = t('about.version', { version: bootstrap.version });
+  $('#about-developer').textContent = DEVELOPER;
+  $('#about-website').href = WEBSITE_URL;
+  $('#about-website').textContent = WEBSITE_URL;
+  $('#about-license').textContent = t('about.license', { license: LICENSE });
+  $('#about-credits').replaceChildren(...CREDITS.map(({ name, license }) => {
+    const item = document.createElement('li');
+    const software = document.createElement('span');
+    software.className = 'credit-name';
+    software.textContent = name;
+    const terms = document.createElement('span');
+    terms.className = 'credit-license';
+    terms.textContent = license;
+    item.append(software, terms);
+    return item;
+  }));
+}
+
+/**
+ * Shows the whole interface in `language`, at once. The open document, the editor content with its
+ * unsaved changes and its undo history are left exactly as they are: only labels are rewritten.
+ */
+function applyLanguage(language) {
+  i18n.setLanguage(language);
+  document.documentElement.lang = i18n.getLanguage();
+  i18n.applyTranslations(document, DOCUMENT_AREA);
+  toolbar.translate();
+  renderAbout();
+  if (visualEditor) {
+    const ratio = scrollRatio();
+    visualEditor.translate();
+    restoreScroll(ratio);
+  }
+  updateDocumentChrome();
+  buildToc();
+  updateStats();
+  updateSearchCount();
 }
 
 function escapeHtml(value) {
@@ -532,11 +596,11 @@ async function exportDocument() {
     clone.classList.add('markdown-body');
     const title = escapeHtml(currentDocument.name.replace(/\.[^.]+$/, ''));
     const html = `<!doctype html>
-<html lang="it" data-theme="${currentTheme}">
+<html lang="${i18n.getLanguage()}" data-theme="${currentTheme}">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="generator" content="EDON MDView">
+<meta name="generator" content="${PRODUCT_NAME}">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src data: https: http:;">
 <title>${title}</title>
 <style>${collectedStyles()}</style>
@@ -546,9 +610,9 @@ ${clone.outerHTML}
 </body>
 </html>`;
     const savedPath = await window.mdview.exportDocument(html);
-    if (savedPath) showToast(`HTML esportato: ${savedPath}`);
+    if (savedPath) showToast(t('toast.exported', { path: savedPath }));
   } catch (error) {
-    showToast(`Esportazione non riuscita: ${error.message}`, 'error');
+    showToast(t('toast.exportFailed', { message: error.message }), 'error');
   } finally {
     $('#export-button').disabled = false;
   }
@@ -577,10 +641,18 @@ $('#conflict-keep').addEventListener('click', () => {
   updateDocumentChrome();
   visualEditor.focus();
 });
-$('#shortcuts-button').addEventListener('click', () => shortcutsDialog.showModal());
+$('#shortcuts-button').addEventListener('click', () => openDialog(shortcutsDialog));
 $('#shortcuts-close').addEventListener('click', () => shortcutsDialog.close());
-shortcutsDialog.addEventListener('click', (event) => {
-  if (event.target === shortcutsDialog) shortcutsDialog.close();
+$('#about-close').addEventListener('click', () => aboutDialog.close());
+for (const dialog of [shortcutsDialog, aboutDialog]) {
+  dialog.addEventListener('click', (event) => {
+    if (event.target === dialog) dialog.close();
+  });
+}
+// The link never navigates the window: the main process opens the product website, and only that.
+$('#about-website').addEventListener('click', (event) => {
+  event.preventDefault();
+  window.mdview.openWebsite().catch((error) => showToast(error.message, 'error'));
 });
 
 searchInput.addEventListener('input', () => {
@@ -620,7 +692,7 @@ content.addEventListener('click', async (event) => {
     try {
       await window.mdview.openRelative(href);
     } catch {
-      showToast('Il collegamento locale non è un documento Markdown consentito.', 'warning');
+      showToast(t('toast.localLinkNotAllowed'), 'warning');
     }
   } else {
     event.preventDefault();
@@ -670,7 +742,7 @@ window.addEventListener('drop', async (event) => {
   if (!file) return;
   try {
     const filePath = window.mdview.pathForFile(file);
-    if (!filePath) throw new Error('Percorso del file non disponibile.');
+    if (!filePath) throw new Error(t('toast.filePathUnavailable'));
     await window.mdview.openDocument(filePath);
   } catch (error) {
     showToast(error.message, 'error');
@@ -715,7 +787,9 @@ window.mdview.onToggleTheme(() => setTheme(currentTheme === 'dark' ? 'light' : '
 window.mdview.onZoom((delta) => setZoom(delta === 0 ? 1 : zoom + delta));
 window.mdview.onExportRequest(exportDocument);
 window.mdview.onPrintRequest(() => window.mdview.printDocument());
-window.mdview.onShortcuts(() => shortcutsDialog.showModal());
+window.mdview.onShortcuts(() => openDialog(shortcutsDialog));
+window.mdview.onAbout(() => openDialog(aboutDialog));
+window.mdview.onLanguageChanged(applyLanguage);
 window.mdview.onEditToggle(toggleEditMode);
 window.mdview.onEditCommand((command) => { if (isEditing()) toolbar.run(command); });
 window.mdview.onSaveAsRequest(saveDocumentAs);
@@ -725,6 +799,7 @@ window.mdview.onSaveRequest(async (request) => {
   if (request && request.id != null) window.mdview.reportSaveResult(request.id, saved || !dirty);
 });
 
+applyLanguage(i18n.getLanguage());
 setTheme(currentTheme);
 setZoom(Number.isFinite(zoom) ? zoom : 1);
 if (!sidebarVisible) {
